@@ -6,11 +6,11 @@ export interface UserInterface{
     id: string;
     name: string;
     email: string;
-    passwordHash: string;
+    password: string;
     role:  Role;
     status: Status;
-    createdAt?: Date;
-    updatedAt?: Date;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export type UserCreation = Omit<UserInterface, Creation> & {

@@ -1,17 +1,16 @@
-import { DataTypes, Model } from 'sequelize';
-import sequelize from '../config/db.js';
+import { Model, DataTypes } from 'sequelize';
+import sequelize from '../config/db.js'; 
 import type { UserInterface, UserCreation } from '../types/user.types.js';
 
-class User extends Model<UserInterface, UserCreation> implements UserInterface {
-  public id!: string;
-  public name!: string;
-  public email!: string;
-  public passwordHash!: string;
-  public role!: 'admin' | 'user' | 'company';
-  public status!: 'active' | 'inactive' | 'suspended';
-
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+class User extends Model<Omit<UserInterface, 'createdAt' | 'updatedAt'>, UserCreation> implements UserInterface {
+  declare id: string;
+  declare name: string;
+  declare email: string;
+  declare password: string;
+  declare role: 'admin' | 'user' | 'company';
+  declare status: 'active' | 'inactive' | 'suspended';
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 }
 
 User.init(
@@ -29,26 +28,25 @@ User.init(
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
-      validate: { isEmail: true },
     },
-    passwordHash: {
+    password: {
       type: DataTypes.STRING,
       allowNull: false,
     },
     role: {
       type: DataTypes.ENUM('admin', 'user', 'company'),
       defaultValue: 'user',
-      allowNull: false,
     },
     status: {
       type: DataTypes.ENUM('active', 'inactive', 'suspended'),
       defaultValue: 'active',
-      allowNull: false,
     },
   },
   {
     sequelize,
+    modelName: 'User',
     tableName: 'users',
+    timestamps: true,
   }
 );
 
