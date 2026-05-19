@@ -12,8 +12,7 @@ async function startServer(): Promise<void> {
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
 
-    // Sincroniza os modelos com o banco
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: true});
     console.log('✨ All models and associations synced successfully.');
 
     app.listen(PORT, () => {
