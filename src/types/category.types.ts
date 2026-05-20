@@ -1,19 +1,20 @@
-type Type = 'income' | 'expense' 
-type Status = 'active' | 'inactive'
-type Creation = 'id' | 'status'| 'userId' | 'createdAt' | 'updatedAt';
+type SequelizeTimestamps = 'createdAt' | 'updatedAt' | 'deletedAt';
 
-export interface CategoryInterface{
-    id: number;
-    name: string;
-    type: Type;
-    status: Status;
-    userId: string | null;
-    createdAt?: Date;
-    updatedAt?: Date;
+export interface CategoryInterface {
+  id: string;
+  name: string;
+  icon?: string | null;
+  color?: string | null;
+  userId?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date | null;
 }
 
-export type CategoryCreation = Omit<CategoryInterface, Creation> & {
-    id?: string;
-    status?: Status;
-    userId?: string | null;
-}
+export type CategoryCreateInput = Omit<CategoryInterface, 'id' | SequelizeTimestamps> & {
+  id?: string;
+};
+
+export type CategoryUpdateInput = Partial<Omit<CategoryInterface, 'id' | 'userId' | SequelizeTimestamps>>;
+
+export type CategoryDTO = Omit<CategoryInterface, 'deletedAt'>;
