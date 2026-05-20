@@ -1,19 +1,20 @@
-import { DataTypes, Model } from 'sequelize';
+import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
-import type { TransactionInterface, TransactionCreation } from '../types/transaction.types.js';
+import type { TransactionInterface } from '../types/transaction.types.js';
 
-class Transaction extends Model<TransactionInterface, TransactionCreation> implements TransactionInterface {
-  public id!: string;
-  public type!: 'income' | 'expense';
-  public amount!: number;
-  public description!: string;
-  public date!: Date;
-  public status!: 'active' | 'inactive';
-  public userId!: string;
-  public categoryId!: number;
+type Type = 'income' | 'outcome' 
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+class Transaction extends Model implements TransactionInterface {
+  declare id: string;
+  declare userId: string;
+  declare categoryId: string;
+  declare description: string;
+  declare amount: number;
+  declare type: Type;
+  declare date: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+  declare readonly deletedAt: Date | null;
 }
 
 Transaction.init(
@@ -23,45 +24,50 @@ Transaction.init(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    type: {
-      type: DataTypes.ENUM('income', 'expense'),
+    userId: {
+      type: DataTypes.UUID,
       allowNull: false,
-    },
-    amount: {
-      type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
-      get() {
-        const value = this.getDataValue('amount');
-        return value ? parseFloat(value as unknown as string) : 0;
+      references: {
+        model: 'users',
+        key: 'id',
       },
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE',
+    },
+    categoryId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'categories',
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'RESTRICT',
     },
     description: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    date: {
-      type: DataTypes.DATEONLY,
-      allowNull: false,
-    },
-    status: {
-      type: DataTypes.ENUM('active', 'inactive'),
-      defaultValue: 'active',
-      allowNull: false,
-    },
-    userId: {
-      type: DataTypes.UUID,
-      allowNull: false,
-      references: { model: 'users', key: 'id' },
-    },
-    categoryId: {
+    amount: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: { model: 'categories', key: 'id' },
+    },
+    type: {
+      type: DataTypes.ENUM('income', 'outcome'),
+      allowNull: false,
+    },
+    date: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
   },
   {
     sequelize,
+    modelName: 'Transaction',
     tableName: 'transactions',
+    timestamps: true,
+    paranoid: true,
   }
 );
 

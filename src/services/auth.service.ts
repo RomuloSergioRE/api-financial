@@ -3,10 +3,10 @@ import { JwtUtil } from '../utils/jwt.util.js';
 import type { UserCreation, UserInterface } from '../types/user.types.js';
 import { SecurityHash } from '../utils/securityHash.util.js';
 
-type UserDTO = Omit<UserInterface, 'password'>;
+type UserDTO = Omit<UserInterface, 'password' | 'deletedAt'>;
 
 const mapToUserDTO = (user: UserInterface): UserDTO => {
-  const { password, ...userDto } = user;
+  const { password, deletedAt, ...userDto } = user; 
   return userDto;
 };
 
@@ -14,8 +14,12 @@ export const AuthService = {
     register: async (userData: UserCreation): Promise<UserDTO> => {
         const { email, password, name } = userData;
 
-        const userExists = await UserRepository.findByEmail(email);
+        const userExists = await UserRepository.findByEmailWithDeleted(email);
+        
         if (userExists) {
+            if (userExists.deletedAt) {
+                throw new Error('This account was deleted. Please contact support to reactivate it.');
+            }
             throw new Error('Email already registered');
         }
 
@@ -34,7 +38,7 @@ export const AuthService = {
         const user = await UserRepository.findByEmail(email);
         
         if (!user || !user.password) {
-            throw new Error('Invalid user');
+            throw new Error('Invalid email or password');
         }
 
         const isPasswordValid = await SecurityHash.comparePassword(password, user.password);

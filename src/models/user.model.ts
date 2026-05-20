@@ -2,15 +2,20 @@ import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/db.js'; 
 import type { UserInterface, UserCreation } from '../types/user.types.js';
 
-class User extends Model<Omit<UserInterface, 'createdAt' | 'updatedAt'>, UserCreation> implements UserInterface {
+type Role = 'admin' | 'user' | 'company';
+type Status = 'active' | 'inactive' | 'suspended';
+type SequelizeTimestamps = 'createdAt' | 'updatedAt' | 'deletedAt';
+
+class User extends Model<Omit<UserInterface, SequelizeTimestamps>, UserCreation> implements UserInterface {
   declare id: string;
   declare name: string;
   declare email: string;
   declare password: string;
-  declare role: 'admin' | 'user' | 'company';
-  declare status: 'active' | 'inactive' | 'suspended';
+  declare role: Role;
+  declare status: Status;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
+  declare readonly deletedAt: Date | null; 
 }
 
 User.init(
@@ -47,6 +52,14 @@ User.init(
     modelName: 'User',
     tableName: 'users',
     timestamps: true,
+    paranoid: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['email'],
+        name: 'users_email_unique_idx'
+      }
+    ]
   }
 );
 
