@@ -1,4 +1,4 @@
-import { Transaction } from '../models/index.js';
+import { Transaction, Category } from '../models/index.js'; 
 import type { TransactionInterface, TransactionCreateInput, TransactionUpdateInput } from '../types/transaction.types.js';
 
 export const TransactionRepository = {
@@ -8,12 +8,31 @@ export const TransactionRepository = {
   },
 
   findByUser: async (userId: string): Promise<TransactionInterface[]> => {
-    const transactions = await Transaction.findAll({ where: { userId } });
+    const transactions = await Transaction.findAll({ 
+      where: { userId },
+      include: [
+        {
+          model: Category,
+          as: 'category',
+          attributes: ['id', 'name', 'icon', 'color'] 
+        }
+      ],
+      order: [['date', 'DESC']] 
+    });
     return transactions.map(transaction => transaction.dataValues as TransactionInterface);
   },
 
   findByIdAndUser: async (id: string, userId: string): Promise<TransactionInterface | null> => {
-    const transaction = await Transaction.findOne({ where: { id, userId } });
+    const transaction = await Transaction.findOne({ 
+      where: { id, userId },
+      include: [
+        {
+          model: Category,
+          as: 'category',
+          attributes: ['id', 'name', 'icon', 'color']
+        }
+      ]
+    });
     return transaction ? (transaction.dataValues as TransactionInterface) : null;
   },
 
