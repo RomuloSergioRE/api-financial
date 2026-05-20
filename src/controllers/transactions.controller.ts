@@ -9,6 +9,12 @@ export const TransactionController = {
         return;
       }
 
+      // 🔥 Validação preventiva: Garante que a transação está sendo vinculada a uma categoria
+      if (!req.body.categoryId) {
+        res.status(400).json({ error: 'categoryId is required to link this transaction' });
+        return;
+      }
+
       const userId = req.user.id as string;
       const transaction = await TransactionService.create(userId, req.body);
       

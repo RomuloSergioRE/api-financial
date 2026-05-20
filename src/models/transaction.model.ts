@@ -2,7 +2,7 @@ import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
 import type { TransactionInterface } from '../types/transaction.types.js';
 
-type Type = 'income' | 'outcome' 
+type Type = 'income' | 'outcome';
 
 class Transaction extends Model implements TransactionInterface {
   declare id: string;
@@ -33,6 +33,7 @@ Transaction.init(
       },
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',
+      field: 'userId',
     },
     categoryId: {
       type: DataTypes.UUID,
@@ -43,6 +44,7 @@ Transaction.init(
       },
       onUpdate: 'CASCADE',
       onDelete: 'RESTRICT',
+      field: 'categoryId', 
     },
     description: {
       type: DataTypes.STRING,
@@ -68,6 +70,16 @@ Transaction.init(
     tableName: 'transactions',
     timestamps: true,
     paranoid: true,
+    indexes: [
+      {
+        fields: ['userId'],
+        name: 'transactions_user_id_idx'
+      },
+      {
+        fields: ['categoryId'],
+        name: 'transactions_category_id_idx'
+      }
+    ]
   }
 );
 

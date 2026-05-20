@@ -1,47 +1,63 @@
-import { DataTypes, Model } from 'sequelize';
+import { Model, DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
-import type { CategoryInterface, CategoryCreation } from '../types/category.types.js';
+import type { CategoryInterface, CategoryCreateInput } from '../types/category.types.js';
 
-class Category extends Model<CategoryInterface, CategoryCreation> implements CategoryInterface {
-  public id!: number;
-  public name!: string;
-  public type!: 'income' | 'expense';
-  public status!: 'active' | 'inactive';
-  public userId!: string | null;
+type SequelizeTimestamps = 'createdAt' | 'updatedAt' | 'deletedAt';
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+class Category extends Model<Omit<CategoryInterface, SequelizeTimestamps>, CategoryCreateInput> implements CategoryInterface {
+  declare id: string;
+  declare name: string;
+  declare icon: string | null;
+  declare color: string | null;
+  declare userId: string | null;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+  declare readonly deletedAt: Date | null;
 }
 
 Category.init(
   {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    type: {
-      type: DataTypes.ENUM('income', 'expense'),
-      allowNull: false,
+    icon: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
-    status: {
-      type: DataTypes.ENUM('active', 'inactive'),
-      defaultValue: 'active',
-      allowNull: false,
+    color: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     userId: {
       type: DataTypes.UUID,
       allowNull: true,
-      references: { model: 'users', key: 'id' },
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'CASCADE',
+      field: 'userId',
     },
   },
   {
     sequelize,
+    modelName: 'Category',
     tableName: 'categories',
+    timestamps: true,
+    paranoid: true,
+    indexes: [
+      {
+        fields: ['userId'],
+        name: 'categories_user_id_idx',
+      },
+    ],
   }
 );
 
