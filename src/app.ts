@@ -2,6 +2,7 @@ import express from 'express';
 import type { Application, Request, Response } from 'express';
 import cors from 'cors';
 import authRouter from './routes/auth.routes.js';
+import transactionRoutes from './routes/transactions.routes.js';
 
 const app: Application = express();
 
@@ -16,4 +17,5 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 app.use('/auth', authRouter);
+app.use('transactions', transactionRoutes)
 export default app;
