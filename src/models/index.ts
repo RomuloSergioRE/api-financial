@@ -2,7 +2,6 @@ import User from './user.model.js';
 import Category from './category.model.js';
 import Transaction from './transaction.model.js';
 
-// Relacionamentos
 User.hasMany(Transaction, { foreignKey: 'userId', as: 'transactions' });
 Transaction.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
