@@ -9,7 +9,6 @@ export const TransactionController = {
         return;
       }
 
-      // 🔥 Validação preventiva: Garante que a transação está sendo vinculada a uma categoria
       if (!req.body.categoryId) {
         res.status(400).json({ error: 'categoryId is required to link this transaction' });
         return;
@@ -95,20 +94,4 @@ export const TransactionController = {
       res.status(400).json({ error: error.message });
     }
   },
-
-  getDashboardBalance: async (req: Request, res: Response): Promise<void> => {
-    try {
-      if (!req.user || !req.user.id) {
-        res.status(401).json({ error: 'Unauthorized: User missing' });
-        return;
-      }
-
-      const userId = req.user.id as string;
-      const balanceData = await TransactionService.getBalance(userId);
-      
-      res.status(200).json(balanceData);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
-    }
-  }
 };

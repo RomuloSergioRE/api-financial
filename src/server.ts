@@ -13,7 +13,6 @@ async function startServer(): Promise<void> {
     console.log('✅ Database connection established successfully.');
 
     await sequelize.sync({ alter: true});
-    //await sequelize.sync({force: true});
     console.log('✨ All models and associations synced successfully.');
 
     app.listen(PORT, () => {
