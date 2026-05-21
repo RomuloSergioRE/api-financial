@@ -9,6 +9,10 @@ export const swaggerDocument: OpenAPIV3.Document = {
   },
   servers: [
     {
+      url: '/',
+      description: 'Servidor Atual (Produção ou Local)'
+    },
+    {
       url: 'http://localhost:3000',
       description: 'Servidor Local de Desenvolvimento',
     },
