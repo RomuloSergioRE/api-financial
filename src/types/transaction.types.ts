@@ -1,21 +1,19 @@
-type Type = 'income' | 'expense' 
-type Status = 'active' | 'inactive'
-type Creation = 'id' | 'status'| 'createdAt' | 'updatedAt';
+type Type = 'income' | 'outcome' 
+type Create ='id' | 'userId' | 'createdAt' | 'updatedAt' | 'deletedAt'
 
-export interface TransactionInterface{
-    id: string;
-    amount: number;
-    description: string;
-    date: Date;
-    type: Type;
-    status: Status;
-    userId: string | null;
-    categoryId: number;
-    createdAt?: Date;
-    updatedAt?: Date;
+export interface TransactionInterface {
+  id: string;
+  userId: string;
+  categoryId: string;
+  description: string;
+  amount: number; 
+  type: Type;
+  date: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date | null;
 }
 
-export type TransactionCreation = Omit<TransactionInterface, Creation> & {
-    id?: string;
-    status?: Status;
-}
+export type TransactionCreateInput = Omit<TransactionInterface, Create>;
+export type TransactionUpdateInput = Partial<TransactionCreateInput>;
+export type TransactionDTO = Omit<TransactionInterface, 'deletedAt'>;

@@ -1,16 +1,18 @@
 type Role = 'admin' | 'user' | 'company';
 type Status = 'active' | 'inactive' | 'suspended';
-type Creation = 'id' | 'role'| 'status' | 'createdAt' | 'updatedAt';
+type SequelizeTimestamps = 'createdAt' | 'updatedAt' | 'deletedAt'
+type Creation = 'id' | 'role' | 'status' | SequelizeTimestamps;
 
-export interface UserInterface{
+export interface UserInterface {
     id: string;
     name: string;
     email: string;
-    passwordHash: string;
-    role:  Role;
+    password: string;
+    role: Role;
     status: Status;
-    createdAt?: Date;
-    updatedAt?: Date;
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt?: Date | null;
 }
 
 export type UserCreation = Omit<UserInterface, Creation> & {
@@ -18,3 +20,7 @@ export type UserCreation = Omit<UserInterface, Creation> & {
     role?: Role;
     status?: Status;
 }
+
+export type UserUpdateInput = Partial<Omit<UserInterface, 'id' | SequelizeTimestamps>> & {
+    status?: Status;
+};

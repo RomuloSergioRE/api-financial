@@ -1,17 +1,21 @@
-import { DataTypes, Model } from 'sequelize';
-import sequelize from '../config/db.js';
+import { Model, DataTypes } from 'sequelize';
+import sequelize from '../config/db.js'; 
 import type { UserInterface, UserCreation } from '../types/user.types.js';
 
-class User extends Model<UserInterface, UserCreation> implements UserInterface {
-  public id!: string;
-  public name!: string;
-  public email!: string;
-  public passwordHash!: string;
-  public role!: 'admin' | 'user' | 'company';
-  public status!: 'active' | 'inactive' | 'suspended';
+type Role = 'admin' | 'user' | 'company';
+type Status = 'active' | 'inactive' | 'suspended';
+type SequelizeTimestamps = 'createdAt' | 'updatedAt' | 'deletedAt';
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+class User extends Model<Omit<UserInterface, SequelizeTimestamps>, UserCreation> implements UserInterface {
+  declare id: string;
+  declare name: string;
+  declare email: string;
+  declare password: string;
+  declare role: Role;
+  declare status: Status;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
+  declare readonly deletedAt: Date | null; 
 }
 
 User.init(
@@ -29,26 +33,33 @@ User.init(
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
-      validate: { isEmail: true },
     },
-    passwordHash: {
+    password: {
       type: DataTypes.STRING,
       allowNull: false,
     },
     role: {
       type: DataTypes.ENUM('admin', 'user', 'company'),
       defaultValue: 'user',
-      allowNull: false,
     },
     status: {
       type: DataTypes.ENUM('active', 'inactive', 'suspended'),
       defaultValue: 'active',
-      allowNull: false,
     },
   },
   {
     sequelize,
+    modelName: 'User',
     tableName: 'users',
+    timestamps: true,
+    paranoid: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['email'],
+        name: 'users_email_unique_idx'
+      }
+    ]
   }
 );
 
