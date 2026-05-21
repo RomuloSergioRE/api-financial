@@ -14,11 +14,6 @@ export interface TransactionInterface {
   deletedAt?: Date | null;
 }
 
-// O que precisamos para criar uma transação (userId vem do JWT no Service)
 export type TransactionCreateInput = Omit<TransactionInterface, Create>;
-
-// O que permitimos atualizar
 export type TransactionUpdateInput = Partial<TransactionCreateInput>;
-
-// O que respondemos para o cliente (pode ser o objeto completo ou omitindo o deletedAt)
 export type TransactionDTO = Omit<TransactionInterface, 'deletedAt'>;

@@ -36,22 +36,4 @@ export const TransactionService = {
       throw new Error('Transaction not found or unauthorized');
     }
   },
-
-  getBalance: async (userId: string) => {
-    const transactions = await TransactionRepository.findByUser(userId);
-    
-    return transactions.reduce(
-      (accumulator, currentTransaction) => {
-        if (currentTransaction.type === 'income') {
-          accumulator.income += currentTransaction.amount;
-          accumulator.balance += currentTransaction.amount;
-        } else {
-          accumulator.outcome += currentTransaction.amount;
-          accumulator.balance -= currentTransaction.amount;
-        }
-        return accumulator;
-      },
-      { income: 0, outcome: 0, balance: 0 }
-    );
-  }
 };

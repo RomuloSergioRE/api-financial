@@ -7,7 +7,6 @@ const app: Application = express();
 app.use(cors());
 app.use(express.json());
 
-// 2. Rota de Health Check (Ótimo para monitoramento e Docker)
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'success',
