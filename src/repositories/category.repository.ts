@@ -8,17 +8,20 @@ export const CategoryRepository = {
         return category.dataValues as CategoryInterface;
     },
 
-    findByUser: async (userId: string): Promise<CategoryInterface[]> => {
-        const categories = await Category.findAll({
+    findByUser: async (userId: string, pagination?: { offset: number; limit: number }): Promise<{ rows: CategoryInterface[]; total: number }> => {
+        const { rows, count } = await Category.findAndCountAll({
         where: {
             [Op.or]: [
                 { userId: userId },
                 { userId: null }
             ]
         },
-        order: [['name', 'ASC']]
+        order: [['name', 'ASC']],
+        offset: pagination?.offset ?? 0,
+        limit: pagination?.limit ?? 20,
+        distinct: true,
         });
-        return categories.map(category => category.dataValues as CategoryInterface);
+        return { rows: rows.map(category => category.dataValues as CategoryInterface), total: count };
     },
 
     findByIdAndUser: async (id: string, userId: string): Promise<CategoryInterface | null> => {

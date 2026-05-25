@@ -1,124 +1,183 @@
-# 💰 API de Controle Financeiro Pessoal
+<div align="center">
 
-Uma API REST completa para gerenciamento e controle de finanças pessoais, desenvolvida com Node.js, TypeScript e PostgreSQL. O projeto conta com autenticação segura, controle de transações, agrupamento por categorias, relatórios analíticos e documentação totalmente interativa com Swagger.
+# 💰 Financial API
 
-## 🚀 Links do Projeto
-* **Repositório Oficial:** [Link para o repositório](https://github.com/RomuloSergioRE/api-financial)
-* **Documentação Interativa (Swagger):** [Acesse a API no Render](https://SUA-URL-DO-RENDER.onrender.com/api-docs) *(Substitua com o link do Render após o deploy)*
+API REST para gerenciamento financeiro pessoal com autenticação JWT, transações por categorias, analytics consolidados, painel administrativo e documentação interativa Swagger.
 
-> 💡 **Nota sobre o deploy:** O backend está hospedado no plano gratuito do Render. Caso o primeiro acesso à documentação demore cerca de 1 minuto para carregar, é apenas o servidor acordando do modo de espera (*spin down*). Os acessos seguintes serão instantâneos!
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Node](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?logo=express&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![Sequelize](https://img.shields.io/badge/Sequelize-52B0E7?logo=sequelize&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-000000?logo=jsonwebtokens&logoColor=white)
+![License](https://img.shields.io/badge/license-ISC-blue)
 
----
-
-## 🛠️ Tecnologias e Ferramentas Utilizadas
-
-* **Ambiente de Execução:** Node.js (v20+)
-* **Linguagem:** TypeScript
-* **Framework Web:** Express
-* **Banco de Dados:** PostgreSQL
-* **ORM (Mapeamento do Banco):** Sequelize
-* **Segurança & Autenticação:** JWT (JSON Web Tokens), Bcrypt, Helmet, Express Rate Limit
-* **Documentação:** Swagger UI Express
+</div>
 
 ---
 
-## 🛡️ Diferenciais e Boas Práticas Aplicadas
+## Funcionalidades
 
-Este projeto foi construído seguindo padrões rigorosos de mercado e segurança para ambientes de produção:
-
-* **Arquitetura Limpa:** Separação clara de responsabilidades entre Rotas, Controllers, Services e Models.
-* **Segurança de Cabeçalhos (Helmet):** Proteção automática contra ataques comuns como XSS e Clickjacking.
-* **Proteção contra Sobrecarga (Rate Limiting):** Limitador de requisições por IP instalado globalmente para evitar ataques de força bruta e negação de serviço (DoS).
-* **Controle de Payload:** Limitação estrita do tamanho de JSONs aceitos pela API (máximo 10kb) para proteger a memória do servidor contra travamentos.
-* **Ambientes Isolados:** Banco de Dados configurado com criptografia SSL dinâmica apenas para produção e sincronização de tabelas (`{ alter: true }`) travada e permitida exclusivamente em ambiente de desenvolvimento.
-
----
-
-## 🗺️ Estrutura Completa de Endpoints (Rotas)
-
-Todas as rotas abaixo (exceto as de autenticação) exigem o envio do Token JWT no cabeçalho da requisição (`Authorization: Bearer <TOKEN>`).
-
-* **Autenticação (`/auth`)**
-  * `POST /auth/register` - Cadastro de novos usuários (com hash de senha seguro).
-  * `POST /auth/login` - Login de usuários e geração do Token JWT.
-
-* **Categorias (`/categories`)**
-  * `GET /categories` - Lista todas as categorias do usuário autenticado.
-  * `POST /categories` - Cria uma nova categoria.
-  * `GET /categories/:id` - Busca os detalhes de uma categoria específica pelo ID.
-  * `PUT /categories/:id` - Atualiza os dados de uma categoria existente.
-  * `DELETE /categories/:id` - Remove uma categoria do sistema.
-
-* **Transações (`/transactions`)**
-  * `GET /transactions` - Lista todo o histórico de receitas e despesas do usuário.
-  * `POST /transactions` - Cadastra uma nova movimentação financeira.
-  * `GET /transactions/:id` - Busca os detalhes de uma transação específica pelo ID.
-  * `PUT /transactions/:id` - Atualiza os dados de uma transação existente.
-  * `DELETE /transactions/:id` - Remove uma transação do sistema.
-
-* **Análises e Relatórios (`/analytics`)**
-  * `GET /analytics/balance` - Retorna o saldo consolidado do usuário.
-  * `GET /analytics/categories` - Retorna a distribuição e participação de gastos por categoria.
+- **Autenticação segura** — Registro e login com senhas hashizadas (bcrypt) e tokens JWT
+- **Refresh token** — Renovação do JWT sem novo login
+- **CRUD de transações** — Receitas e despesas vinculadas a categorias, com valores em centavos (INTEGER)
+- **CRUD de categorias** — Categorias por usuário com suporte a categorias globais do sistema
+- **Analytics financeiros** — Saldo consolidado e distribuição percentual de gastos por categoria, com filtros por data e categoria
+- **Painel admin** — Gerenciamento de usuários (status, papel, remoção), categorias globais e visão geral da plataforma
+- **Auditoria admin** — Registro de ações administrativas (alteração de status, papel, remoção de usuários)
+- **Soft delete** — Todos os registros usam deleção lógica (paranoid), preservando histórico
+- **Paginação** — Listagens paginadas com `page` e `limit` para evitar sobrecarga
+- **Validação de entrada** — Schemas Zod em todos os endpoints com mensagens de erro descritivas
+- **Rate limiting específico** — Login limitado a 5 tentativas/minuto por IP
+- **CSP ativo** — Content-Security-Policy configurado via Helmet (compatível com Swagger UI)
+- **Status no JWT** — Token contém status do usuário para verificação rápida sem consulta ao banco
+- **Documentação interativa** — Swagger UI disponível em `/api-docs`
 
 ---
 
+## Tecnologias
+
+| Tecnologia | Propósito |
+|---|---|
+| **Node.js** | Ambiente de execução |
+| **TypeScript** | Tipagem estática e segurança em tempo de compilação |
+| **Express** | Framework web com middleware pipeline (Helmet, CORS, Rate Limit) |
+| **PostgreSQL** | Banco de dados relacional |
+| **Sequelize** | ORM com modelos, associações e soft delete |
+| **JWT + bcrypt** | Autenticação stateless e hash de senhas |
+| **Zod** | Validação de schemas de entrada com tipagem inferida |
+| **Helmet** | Headers de segurança HTTP |
+| **express-rate-limit** | Rate limiting por IP |
+| **Swagger UI** | Documentação OpenAPI interativa |
+
 ---
 
-## 🧪 Testes Automatizados com Postman
+## Arquitetura
 
-A coleção de testes ponta a ponta está configurada e disponível diretamente no repositório para validação rápida dos fluxos da API.
+O projeto segue uma arquitetura em camadas com separação clara de responsabilidades:
 
-* **Arquivo da Coleção:** [Acessar coleção JSON](./postman/Financial.postman_collection.json)
+```
+┌──────────┐     ┌────────────┐     ┌──────────┐     ┌──────────────┐     ┌───────────┐
+│  Routes  │────▶│Controllers │────▶│ Services │────▶│ Repositories │────▶│  Models   │
+└──────────┘     └────────────┘     └──────────┘     └──────────────┘     └───────────┘
+                                                                                │
+                                                                          ┌──────▼──────┐
+                                                                          │ PostgreSQL  │
+                                                                          └─────────────┘
+```
 
-### Como utilizar a coleção:
+- **Routes** — Definem os endpoints e aplicam middlewares (autenticação, autorização, rate limit)
+- **Controllers** — Extraem dados da requisição, delegam ao service e montam a resposta
+- **Services** — Regras de negócio, mapeamento para DTOs (remove campos sensíveis como `password`, `deletedAt`)
+- **Repositories** — Abstração de acesso a dados, isolando o ORM da camada de negócio
+- **Models** — Definições Sequelize com índices, associações e soft delete
 
-1. Abra o seu Postman e clique em **Import**.
-2. Selecione o arquivo `Financial.postman_collection.json` localizado na pasta `/postman`.
-3. Configure o seu **Postman Environment** com as seguintes variáveis globais:
-   * `baseUrl`: Endereço da API (Ex: `http://localhost:3000` ou a URL do Render).
-   * `jwt_token`: Deixe em branco (será preenchida automaticamente no login).
-   * `categoryId`: Deixe em branco (será preenchida automaticamente ao criar uma categoria).
-   * `transactionId`: ID gerado ao criar transações.
+---
 
-> 💡 **Fluxo inteligente:** A rota de `Login` e de `Create Category` possuem scripts de teste pré-configurados que capturam os tokens e IDs de resposta do servidor e salvam de forma dinâmica nas variáveis do ambiente, dispensando a necessidade de copiar e colar chaves manualmente.
+## Endpoints
 
-## 💻 Como Rodar o Projeto Localmente
+### Autenticação
 
-Siga o passo a passo abaixo para clonar e rodar o projeto na sua máquina:
+| Método | Rota | Descrição | Auth |
+|--------|------|-----------|------|
+| `POST` | `/auth/register` | Cadastrar novo usuário | ❌ |
+| `POST` | `/auth/login` | Login e retorno do JWT (rate limit: 5/min) | ❌ |
+| `POST` | `/auth/refresh` | Renovar token JWT | ❌ |
 
-### 1. Clonar o Repositório
+### Transações
+
+| Método | Rota | Descrição | Auth |
+|--------|------|-----------|------|
+| `GET` | `/transactions?page=&limit=` | Listar transações | ✅ |
+| `POST` | `/transactions` | Criar transação | ✅ |
+| `GET` | `/transactions/:id` | Detalhar transação | ✅ |
+| `PUT` | `/transactions/:id` | Atualizar transação | ✅ |
+| `DELETE` | `/transactions/:id` | Remover transação | ✅ |
+
+### Categorias
+
+| Método | Rota | Descrição | Auth |
+|--------|------|-----------|------|
+| `GET` | `/categories?page=&limit=` | Listar categorias do usuário | ✅ |
+| `POST` | `/categories` | Criar categoria | ✅ |
+| `GET` | `/categories/:id` | Detalhar categoria | ✅ |
+| `PUT` | `/categories/:id` | Atualizar categoria | ✅ |
+| `DELETE` | `/categories/:id` | Remover categoria | ✅ |
+
+### Analytics
+
+| Método | Rota | Descrição | Auth |
+|--------|------|-----------|------|
+| `GET` | `/analytics/balance?startDate=&endDate=&categoryId=` | Saldo consolidado | ✅ |
+| `GET` | `/analytics/categories?startDate=&endDate=&categoryId=` | Distribuição por categoria | ✅ |
+
+### Admin (requer role `admin`)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/admin/users?page=&limit=&role=&status=&search=` | Listar todos os usuários |
+| `GET` | `/admin/users/:id` | Detalhar usuário com estatísticas financeiras |
+| `PATCH` | `/admin/users/:id/status` | Alterar status de um usuário |
+| `PATCH` | `/admin/users/:id/role` | Alterar papel de um usuário |
+| `DELETE` | `/admin/users/:id` | Remover (soft delete) um usuário |
+| `POST` | `/admin/categories` | Criar categoria global |
+| `PUT` | `/admin/categories/:id` | Atualizar categoria global |
+| `DELETE` | `/admin/categories/:id` | Remover categoria global |
+| `GET` | `/admin/analytics/overview` | Visão geral da plataforma |
+| `GET` | `/admin/analytics/users/:id` | Métricas financeiras de um usuário |
+
+Outros:
+
+| Método | Rota | Descrição | Auth |
+|--------|------|-----------|------|
+| `GET` | `/health` | Health check do servidor | ❌ |
+
+---
+
+## Segurança
+
+- **Senhas** hashizadas com bcrypt (10 rounds)
+- **JWT** sem fallback — variável de ambiente obrigatória na inicialização
+- **Status no token** — auth middleware verifica status sem consultar banco
+- **CORS** configurável via environment, restrito por padrão a localhost
+- **SSL** configurável (`DB_USE_SSL`, `DB_SSL_REJECT_UNAUTHORIZED`)
+- **Rate limiting** global (100 req/15min) + específico no login (5/min)
+- **CSP** ativo via Helmet com suporte a Swagger UI
+- **Validação Zod** em todos os endpoints contra mass assignment e injeção
+- **Auditoria** ações admin registradas em tabela `audit_logs`
+
+---
+
+## Como Rodar Localmente
+
 ```bash
+# 1. Clone
 git clone https://github.com/RomuloSergioRE/api-financial.git
 cd api-financial
-```
 
-### 2. Instalar as Dependências
-```bash
+# 2. Instale as dependências
 npm install
-```
 
-### 3. Configurar as Variáveis de Ambiente
-#### Crie um arquivo chamado .env na raiz do seu projeto e preencha com as suas configurações locais
+# 3. Configure o .env (veja .env.example)
+cp .env.example .env
 
-```env
-PORT=
-NODE_ENV=
-
-# Configurações do seu Banco PostgreSQL Local
-DB_HOST=
-DB_USER=
-DB_PASS=
-DB_NAME=
-DB_PORT=
-
-# Configurações do Token
-JWT_SECRET=
-JWT_EXPIRES_IN=
-
-```
-### 4. Executar a Aplicação em Modo de Desenvolvimento
-
-```bash
+# 4. Inicie o servidor
 npm run dev
 ```
-#### O servidor iniciará localmente e a documentação interativa estará disponível em: http://localhost:3000/api-docs
+
+Acesse a documentação Swagger em [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+
+> **Deploy no Render:** Configure as envs `NODE_ENV=production`, `DB_USE_SSL=true`, e as credenciais do Render PostgreSQL. O build command é `npm run build` e o start command `npm start`.
+
+---
+
+## Testes
+
+Uma collection Postman com fluxo completo (registro → login → CRUD → analytics) está disponível em [`/postman`](./postman/Financial.postman_collection.json). As variáveis `jwt_token` e `categoryId` são preenchidas automaticamente pelos scripts de teste.
+
+---
+
+## Links
+
+- **Repositório:** [github.com/RomuloSergioRE/api-financial](https://github.com/RomuloSergioRE/api-financial)
+- **Swagger:** [`/api-docs`](http://localhost:3000/api-docs) (local) ou `https://<seu-render>.onrender.com/api-docs` (produção)

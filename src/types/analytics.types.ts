@@ -19,12 +19,17 @@ export interface AnalyticsFilterInput {
   categoryId?: string | undefined;  
 }
 
-export interface SequelizeGroupResult {
-  categoryId: string;
-  total: string;
-  category: {
-    name: string;
-    color: string | null;
-    icon: string | null;
+export interface PaginationParams {
+  offset: number;
+  limit: number;
+}
+
+export interface PaginatedResult<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
   };
 }
