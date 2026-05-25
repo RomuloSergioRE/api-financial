@@ -17,9 +17,6 @@ export const AuthService = {
         const userExists = await UserRepository.findByEmailWithDeleted(email);
         
         if (userExists) {
-            if (userExists.deletedAt) {
-                throw new Error('This account was deleted. Please contact support to reactivate it.');
-            }
             throw new Error('Email already registered');
         }
 
@@ -49,11 +46,21 @@ export const AuthService = {
         const token = JwtUtil.generateToken({
             userId: user.id,
             role: user.role,
+            status: user.status,
         });
 
         return {
             user: mapToUserDTO(user),
             token,
         };
+    },
+
+    refreshToken: (token: string): string => {
+        const decoded = JwtUtil.verifyToken(token);
+        return JwtUtil.generateToken({
+            userId: decoded.userId,
+            role: decoded.role,
+            status: decoded.status,
+        });
     }
 };

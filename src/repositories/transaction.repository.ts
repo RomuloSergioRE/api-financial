@@ -7,8 +7,8 @@ export const TransactionRepository = {
     return transaction.dataValues as TransactionInterface;
   },
 
-  findByUser: async (userId: string): Promise<TransactionInterface[]> => {
-    const transactions = await Transaction.findAll({ 
+  findByUser: async (userId: string, pagination?: { offset: number; limit: number }): Promise<{ rows: TransactionInterface[]; total: number }> => {
+    const { rows, count } = await Transaction.findAndCountAll({ 
       where: { userId },
       include: [
         {
@@ -17,9 +17,14 @@ export const TransactionRepository = {
           attributes: ['id', 'name', 'icon', 'color'] 
         }
       ],
-      order: [['date', 'DESC']] 
+      order: [['date', 'DESC']],
+      offset: pagination?.offset ?? 0,
+      limit: pagination?.limit ?? 20,
+      raw: true,
+      nest: true,
+      distinct: true,
     });
-    return transactions.map(transaction => transaction.dataValues as TransactionInterface);
+    return { rows: rows as unknown as TransactionInterface[], total: count };
   },
 
   findByIdAndUser: async (id: string, userId: string): Promise<TransactionInterface | null> => {
@@ -31,9 +36,11 @@ export const TransactionRepository = {
           as: 'category',
           attributes: ['id', 'name', 'icon', 'color']
         }
-      ]
+      ],
+      raw: true,
+      nest: true,
     });
-    return transaction ? (transaction.dataValues as TransactionInterface) : null;
+    return transaction as unknown as TransactionInterface | null;
   },
 
   update: async (id: string, userId: string, data: TransactionUpdateInput): Promise<TransactionInterface | null> => {

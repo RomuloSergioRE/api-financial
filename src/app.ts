@@ -4,16 +4,42 @@ import cors from 'cors';
 import helmet from 'helmet'; 
 import { rateLimit } from 'express-rate-limit'; 
 import swaggerUi from 'swagger-ui-express';
-import { swaggerDocument } from './config/swagger.js'; 
+import { getSwaggerDocument } from './config/swagger.js'; 
 import routes from './routes/index.js'; 
 
 const app: Application = express();
 
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+    },
+  },
 }));
 
-app.use(cors());
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',')
+  : ['http://localhost:3000', 'http://localhost:*'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.some(o => {
+      if (o.endsWith(':*')) {
+        const base = o.slice(0, -2);
+        return origin.startsWith(base);
+      }
+      return o === origin;
+    })) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '10kb' })); 
 
 const limiter = rateLimit({
@@ -25,7 +51,9 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+const renderUrl = process.env.RENDER_EXTERNAL_URL || process.env.SWAGGER_SERVER_URL;
+const swaggerDoc = getSwaggerDocument(renderUrl);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({

@@ -18,7 +18,12 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction):
 
   try {
     const decoded = JwtUtil.verifyToken(token);
-    
+
+    if (decoded.status !== 'active') {
+      res.status(401).json({ error: 'Account is inactive or suspended.' });
+      return;
+    }
+
     req.user = {
       id: decoded.userId,
       role: decoded.role,
