@@ -1,5 +1,5 @@
-type Role = 'admin' | 'user' | 'company';
-type Status = 'active' | 'inactive' | 'suspended';
+export type Role = 'admin' | 'user' | 'company';
+export type Status = 'active' | 'inactive' | 'suspended';
 type SequelizeTimestamps = 'createdAt' | 'updatedAt' | 'deletedAt'
 type Creation = 'id' | 'role' | 'status' | SequelizeTimestamps;
 

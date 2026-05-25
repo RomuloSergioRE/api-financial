@@ -76,8 +76,16 @@ Transaction.init(
         name: 'transactions_user_id_idx'
       },
       {
+        fields: ['userId', 'deleted_at'],
+        name: 'transactions_user_id_deleted_at_idx'
+      },
+      {
         fields: ['categoryId'],
         name: 'transactions_category_id_idx'
+      },
+      {
+        fields: ['categoryId', 'deleted_at'],
+        name: 'transactions_category_id_deleted_at_idx'
       }
     ]
   }

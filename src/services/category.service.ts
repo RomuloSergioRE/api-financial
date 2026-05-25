@@ -12,9 +12,9 @@ export const CategoryService = {
         return mapToCategoryDTO(category);
     },
 
-    findByUser: async (userId: string): Promise<CategoryDTO[]> => {
-        const categories = await CategoryRepository.findByUser(userId);
-        return categories.map(mapToCategoryDTO);
+    findByUser: async (userId: string, pagination?: { offset: number; limit: number }): Promise<{ rows: CategoryDTO[]; total: number }> => {
+        const { rows, total } = await CategoryRepository.findByUser(userId, pagination);
+        return { rows: rows.map(mapToCategoryDTO), total };
     },
 
     findByIdAndUser: async (id: string, userId: string): Promise<CategoryDTO | null> => {

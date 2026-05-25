@@ -8,7 +8,8 @@ const dbUser = process.env.DB_USER;
 const dbPass = process.env.DB_PASS;
 const dbHost = process.env.DB_HOST;
 const dbPort = process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432;
-const isProduction = process.env.NODE_ENV === 'production';
+const useSSL = process.env.DB_USE_SSL === 'true';
+const rejectUnauthorized = process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false';
 
 if (!dbName || !dbUser || !dbPass || !dbHost) {
   throw new Error('❌ Missing database environment variables.');
@@ -23,11 +24,11 @@ const sequelize = new Sequelize(dbName, dbUser, dbPass, {
     timestamps: true,
     underscored: true, 
   },
-  dialectOptions: isProduction
+  dialectOptions: useSSL
     ? {
         ssl: {
           require: true,
-          rejectUnauthorized: false, 
+          rejectUnauthorized,
         },
       }
     : {},

@@ -1,6 +1,7 @@
 import User from './user.model.js';
 import Transaction from './transaction.model.js';
 import Category from './category.model.js';
+import AuditLog from './audit.model.js';
 
 // User -> Transaction
 User.hasMany(Transaction, { foreignKey: 'userId', as: 'transactions' });
@@ -14,4 +15,4 @@ Category.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Category.hasMany(Transaction, { foreignKey: 'categoryId', as: 'transactions' });
 Transaction.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
 
-export { User, Transaction, Category };
+export { User, Transaction, Category, AuditLog };
