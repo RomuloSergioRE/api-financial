@@ -1,7 +1,7 @@
 {
   "info": {
-    "_postman_id": "8d79f5ed-9fa6-409f-9025-3679cf016881",
-    "name": "Financial - User",
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Financial - Admin",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "55079915"
   },
@@ -10,104 +10,18 @@
       "name": "Auth",
       "item": [
         {
-          "name": "Health Check",
+          "name": "Login Admin",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Servidor rodando\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.status).to.eql(\"success\");",
-                  "    pm.expect(jsonData.message).to.eql(\"Servidor rodando perfeitamente!\");",
-                  "    pm.expect(jsonData.timestamp).to.exist;",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["health"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Register",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Usuário registrado com sucesso\", function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([201, 400]);",
-                  "    if (pm.response.code === 201) {",
-                  "        var jsonData = pm.response.json();",
-                  "        pm.expect(jsonData).to.have.property(\"id\");",
-                  "        pm.expect(jsonData).to.have.property(\"email\");",
-                  "        pm.expect(jsonData).to.not.have.property(\"password\");",
-                  "    }",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Dev Teste\",\n  \"email\": \"teste@email.com\",\n  \"password\": \"senha123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "register"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Login efetuado com sucesso\", function () {",
+                  "pm.test(\"Login admin efetuado com sucesso\", function () {",
                   "    pm.response.to.have.status(200);",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData).to.have.property(\"token\");",
-                  "    pm.expect(jsonData).to.have.property(\"user\");",
-                  "    pm.expect(jsonData.user).to.not.have.property(\"password\");",
-                  "    pm.environment.set(\"jwt_token\", jsonData.token);",
+                  "    pm.expect(jsonData.user.role).to.eql(\"admin\");",
+                  "    pm.environment.set(\"admin_token\", jsonData.token);",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -126,7 +40,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"teste@email.com\",\n  \"password\": \"senha123\"\n}",
+              "raw": "{\n  \"email\": \"admin@financial.com\",\n  \"password\": \"admin123456\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -140,181 +54,21 @@
             }
           },
           "response": []
-        },
-        {
-          "name": "Refresh Token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Token renovado com sucesso\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property(\"token\");",
-                  "    pm.environment.set(\"jwt_token\", jsonData.token);",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{jwt_token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["auth", "refresh"]
-            }
-          },
-          "response": []
         }
       ],
-      "description": "Endpoints de autenticacao e health check"
+      "description": "Autenticacao administrativa (seed: admin@financial.com / admin123456)"
     },
     {
-      "name": "Transactions",
+      "name": "Users",
       "item": [
         {
-          "name": "Create Income",
+          "name": "List Users",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Receita criada com sucesso\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property(\"id\");",
-                  "    pm.expect(jsonData.type).to.eql(\"income\");",
-                  "    pm.expect(jsonData.amount).to.eql(350000);",
-                  "    pm.environment.set(\"transactionId\", jsonData.id);",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{jwt_token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"description\": \"Salário Dev\",\n  \"amount\": 350000,\n  \"type\": \"income\",\n  \"date\": \"2026-05-21T00:00:00.000Z\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/transactions",
-              "host": ["{{baseUrl}}"],
-              "path": ["transactions"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create Expense",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Despesa criada com sucesso\", function () {",
-                  "    pm.response.to.have.status(201);",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property(\"id\");",
-                  "    pm.expect(jsonData.type).to.eql(\"outcome\");",
-                  "    pm.expect(jsonData.amount).to.eql(25000);",
-                  "    pm.environment.set(\"transactionId\", jsonData.id);",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{jwt_token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"categoryId\": \"{{categoryId}}\",\n  \"description\": \"Supermercado\",\n  \"amount\": 25000,\n  \"type\": \"outcome\",\n  \"date\": \"2026-05-21T00:00:00.000Z\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/transactions",
-              "host": ["{{baseUrl}}"],
-              "path": ["transactions"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "List Transactions",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Transações listadas com sucesso\", function () {",
+                  "pm.test(\"Usuários listados com sucesso\", function () {",
                   "    pm.response.to.have.status(200);",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData).to.have.property(\"data\");",
@@ -323,6 +77,7 @@
                   "    pm.expect(jsonData.pagination).to.have.property(\"limit\");",
                   "    pm.expect(jsonData.pagination).to.have.property(\"total\");",
                   "    pm.expect(jsonData.pagination).to.have.property(\"totalPages\");",
+                  "    pm.expect(jsonData.data[0]).to.not.have.property(\"password\");",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -337,7 +92,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{jwt_token}}",
+                  "value": "{{admin_token}}",
                   "type": "string"
                 }
               ]
@@ -350,31 +105,29 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/transactions?page=1&limit=10",
+              "raw": "{{baseUrl}}/admin/users?page=1&limit=20",
               "host": ["{{baseUrl}}"],
-              "path": ["transactions"],
+              "path": ["admin", "users"],
               "query": [
                 { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" }
+                { "key": "limit", "value": "20" }
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Get Transaction By ID",
+          "name": "List Users - Filtered",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Transação encontrada\", function () {",
+                  "pm.test(\"Usuários filtrados com sucesso\", function () {",
                   "    pm.response.to.have.status(200);",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property(\"id\");",
-                  "    pm.expect(jsonData).to.have.property(\"description\");",
-                  "    pm.expect(jsonData).to.have.property(\"amount\");",
-                  "    pm.expect(jsonData).to.have.property(\"type\");",
+                  "    pm.expect(jsonData).to.have.property(\"data\");",
+                  "    pm.expect(jsonData).to.have.property(\"pagination\");",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -389,7 +142,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{jwt_token}}",
+                  "value": "{{admin_token}}",
                   "type": "string"
                 }
               ]
@@ -402,26 +155,36 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/transactions/{{transactionId}}",
+              "raw": "{{baseUrl}}/admin/users?page=1&limit=10&role=user&status=active&search=teste",
               "host": ["{{baseUrl}}"],
-              "path": ["transactions", "{{transactionId}}"]
+              "path": ["admin", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "role", "value": "user" },
+                { "key": "status", "value": "active" },
+                { "key": "search", "value": "teste" }
+              ]
             }
           },
           "response": []
         },
         {
-          "name": "Update Transaction",
+          "name": "Get User By ID",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Transação atualizada com sucesso\", function () {",
+                  "pm.test(\"Usuário encontrado\", function () {",
                   "    pm.response.to.have.status(200);",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property(\"id\");",
-                  "    pm.expect(jsonData.description).to.eql(\"Supermercado (Compras do Mês)\");",
-                  "    pm.expect(jsonData.amount).to.eql(28000);",
+                  "    pm.expect(jsonData).to.have.property(\"user\");",
+                  "    pm.expect(jsonData).to.have.property(\"totalTransactions\");",
+                  "    pm.expect(jsonData).to.have.property(\"totalIncome\");",
+                  "    pm.expect(jsonData).to.have.property(\"totalOutcome\");",
+                  "    pm.expect(jsonData).to.have.property(\"netBalance\");",
+                  "    pm.expect(jsonData.user).to.not.have.property(\"password\");",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -436,12 +199,58 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{jwt_token}}",
+                  "value": "{{admin_token}}",
                   "type": "string"
                 }
               ]
             },
-            "method": "PUT",
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "{{targetUserId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status do usuário alterado\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property(\"status\");",
+                  "    pm.expect(jsonData).to.not.have.property(\"password\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
             "header": [
               {
                 "key": "Content-Type",
@@ -450,7 +259,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"description\": \"Supermercado (Compras do Mês)\",\n  \"amount\": 28000\n}",
+              "raw": "{\n  \"status\": \"suspended\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -458,21 +267,184 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/transactions/{{transactionId}}",
+              "raw": "{{baseUrl}}/admin/users/{{targetUserId}}/status",
               "host": ["{{baseUrl}}"],
-              "path": ["transactions", "{{transactionId}}"]
+              "path": ["admin", "users", "{{targetUserId}}", "status"]
             }
           },
           "response": []
         },
         {
-          "name": "Delete Transaction",
+          "name": "Update User Status - Reactivate",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Transação removida com sucesso\", function () {",
+                  "pm.test(\"Usuário reativado\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql(\"active\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{targetUserId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "{{targetUserId}}", "status"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Papel do usuário alterado\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property(\"role\");",
+                  "    pm.expect(jsonData).to.not.have.property(\"password\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"company\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{targetUserId}}/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "{{targetUserId}}", "role"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User Role - Restore",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Papel restaurado para user\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.role).to.eql(\"user\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"user\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{targetUserId}}/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "users", "{{targetUserId}}", "role"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Usuário removido com sucesso\", function () {",
                   "    pm.response.to.have.status(204);",
                   "});"
                 ],
@@ -488,7 +460,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{jwt_token}}",
+                  "value": "{{admin_token}}",
                   "type": "string"
                 }
               ]
@@ -501,32 +473,33 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/transactions/{{transactionId}}",
+              "raw": "{{baseUrl}}/admin/users/{{targetUserId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["transactions", "{{transactionId}}"]
+              "path": ["admin", "users", "{{targetUserId}}"]
             }
           },
           "response": []
         }
       ],
-      "description": "CRUD de transacoes financeiras (valores em centavos)"
+      "description": "Gerenciamento administrativo de usuarios"
     },
     {
-      "name": "Categories",
+      "name": "Global Categories",
       "item": [
         {
-          "name": "Create Category",
+          "name": "Create Global Category",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Categoria criada com sucesso\", function () {",
+                  "pm.test(\"Categoria global criada\", function () {",
                   "    pm.response.to.have.status(201);",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData).to.have.property(\"id\");",
                   "    pm.expect(jsonData).to.have.property(\"name\");",
-                  "    pm.environment.set(\"categoryId\", jsonData.id);",
+                  "    pm.expect(jsonData.userId).to.be.null;",
+                  "    pm.environment.set(\"globalCategoryId\", jsonData.id);",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -541,7 +514,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{jwt_token}}",
+                  "value": "{{admin_token}}",
                   "type": "string"
                 }
               ]
@@ -555,7 +528,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Alimentação\",\n  \"icon\": \"food\",\n  \"color\": \"#FF5733\"\n}",
+              "raw": "{\n  \"name\": \"Benefícios\",\n  \"icon\": \"briefcase\",\n  \"color\": \"#00FF00\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -563,29 +536,25 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/categories",
+              "raw": "{{baseUrl}}/admin/categories",
               "host": ["{{baseUrl}}"],
-              "path": ["categories"]
+              "path": ["admin", "categories"]
             }
           },
           "response": []
         },
         {
-          "name": "List Categories",
+          "name": "Update Global Category",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Categorias listadas com sucesso\", function () {",
+                  "pm.test(\"Categoria global atualizada\", function () {",
                   "    pm.response.to.have.status(200);",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property(\"data\");",
-                  "    pm.expect(jsonData).to.have.property(\"pagination\");",
-                  "    pm.expect(jsonData.pagination).to.have.property(\"page\");",
-                  "    pm.expect(jsonData.pagination).to.have.property(\"limit\");",
-                  "    pm.expect(jsonData.pagination).to.have.property(\"total\");",
-                  "    pm.expect(jsonData.pagination).to.have.property(\"totalPages\");",
+                  "    pm.expect(jsonData.name).to.eql(\"Benefícios Corporativos\");",
+                  "    pm.expect(jsonData.userId).to.be.null;",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -600,102 +569,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{jwt_token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/categories?page=1&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["categories"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Category By ID",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Categoria encontrada\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property(\"id\");",
-                  "    pm.expect(jsonData).to.have.property(\"name\");",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{jwt_token}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/categories/{{categoryId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["categories", "{{categoryId}}"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update Category",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test(\"Categoria atualizada com sucesso\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.name).to.eql(\"Alimentação e Mercado\");",
-                  "});"
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{jwt_token}}",
+                  "value": "{{admin_token}}",
                   "type": "string"
                 }
               ]
@@ -709,7 +583,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Alimentação e Mercado\",\n  \"icon\": \"shopping-cart\",\n  \"color\": \"#FF0000\"\n}",
+              "raw": "{\n  \"name\": \"Benefícios Corporativos\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -717,21 +591,21 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/categories/{{categoryId}}",
+              "raw": "{{baseUrl}}/admin/categories/{{globalCategoryId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["categories", "{{categoryId}}"]
+              "path": ["admin", "categories", "{{globalCategoryId}}"]
             }
           },
           "response": []
         },
         {
-          "name": "Delete Category",
+          "name": "Delete Global Category",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Categoria removida com sucesso\", function () {",
+                  "pm.test(\"Categoria global removida\", function () {",
                   "    pm.response.to.have.status(204);",
                   "});"
                 ],
@@ -747,7 +621,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{jwt_token}}",
+                  "value": "{{admin_token}}",
                   "type": "string"
                 }
               ]
@@ -760,32 +634,35 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/categories/{{categoryId}}",
+              "raw": "{{baseUrl}}/admin/categories/{{globalCategoryId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["categories", "{{categoryId}}"]
+              "path": ["admin", "categories", "{{globalCategoryId}}"]
             }
           },
           "response": []
         }
       ],
-      "description": "CRUD de categorias do usuario"
+      "description": "Gerenciamento de categorias globais do sistema"
     },
     {
       "name": "Analytics",
       "item": [
         {
-          "name": "Get Balance",
+          "name": "Platform Overview",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Saldo consolidado retornado\", function () {",
+                  "pm.test(\"Overview da plataforma retornado\", function () {",
                   "    pm.response.to.have.status(200);",
                   "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property(\"totalUsers\");",
+                  "    pm.expect(jsonData).to.have.property(\"activeUsers\");",
+                  "    pm.expect(jsonData).to.have.property(\"totalTransactions\");",
                   "    pm.expect(jsonData).to.have.property(\"totalIncome\");",
                   "    pm.expect(jsonData).to.have.property(\"totalOutcome\");",
-                  "    pm.expect(jsonData).to.have.property(\"netBalance\");",
+                  "    pm.expect(jsonData).to.have.property(\"netPlatformBalance\");",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -800,7 +677,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{jwt_token}}",
+                  "value": "{{admin_token}}",
                   "type": "string"
                 }
               ]
@@ -813,24 +690,28 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/analytics/balance",
+              "raw": "{{baseUrl}}/admin/analytics/overview",
               "host": ["{{baseUrl}}"],
-              "path": ["analytics", "balance"]
+              "path": ["admin", "analytics", "overview"]
             }
           },
           "response": []
         },
         {
-          "name": "Expenses by Category",
+          "name": "User Metrics",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Distribuição por categoria retornada\", function () {",
+                  "pm.test(\"Métricas do usuário retornadas\", function () {",
                   "    pm.response.to.have.status(200);",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.be.an(\"array\");",
+                  "    pm.expect(jsonData).to.have.property(\"balance\");",
+                  "    pm.expect(jsonData).to.have.property(\"categories\");",
+                  "    pm.expect(jsonData.balance).to.have.property(\"totalIncome\");",
+                  "    pm.expect(jsonData.balance).to.have.property(\"totalOutcome\");",
+                  "    pm.expect(jsonData.balance).to.have.property(\"netBalance\");",
                   "});"
                 ],
                 "type": "text/javascript",
@@ -845,7 +726,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{jwt_token}}",
+                  "value": "{{admin_token}}",
                   "type": "string"
                 }
               ]
@@ -858,15 +739,15 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/analytics/categories",
+              "raw": "{{baseUrl}}/admin/analytics/users/{{targetUserId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["analytics", "categories"]
+              "path": ["admin", "analytics", "users", "{{targetUserId}}"]
             }
           },
           "response": []
         }
       ],
-      "description": "Analytics financeiros com filtros por data e categoria"
+      "description": "Analytics administrativos da plataforma"
     }
   ],
   "variable": [
