@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: api-financial
+    env: node
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_USE_SSL
+        value: "true"
+      - key: DB_SSL_REJECT_UNAUTHORIZED
+        value: "false"
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - fromGroup: api-financial-db
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          type: web
+          name: api-financial
+          property: host
+
+databases:
+  - name: api-financial-db
+    databaseName: api_financial
+    plan: free

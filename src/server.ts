@@ -26,6 +26,9 @@ async function startServer(): Promise<void> {
     if (NODE_ENV !== 'production') {
       await sequelize.sync({ alter: true });
       console.log('✨ All models and associations synced successfully in development mode.');
+    } else {
+      await sequelize.sync();
+      console.log('📦 Database tables synced successfully.');
     }
 
     app.listen(PORT, () => {
