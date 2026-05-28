@@ -186,4 +186,4 @@ Fluxo administrativo (login admin → gestão de usuários → categorias globai
 ## Links
 
 - **Repositório:** [github.com/RomuloSergioRE/api-financial](https://github.com/RomuloSergioRE/api-financial)
-- **Swagger:** [`/api-docs`](http://localhost:3000/api-docs) (local) ou `https://<seu-render>.onrender.com/api-docs` (produção)
+- **Swagger:** [`/api-docs`](http://localhost:3000/api-docs) (local) ou [`https://api-financial-279h.onrender.com/api-docs`](https://api-financial-279h.onrender.com/api-docs) (produção)
