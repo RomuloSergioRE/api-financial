@@ -173,7 +173,13 @@ Acesse a documentação Swagger em [http://localhost:3000/api-docs](http://local
 
 ## Testes
 
-Uma collection Postman com fluxo completo (registro → login → CRUD → analytics) está disponível em [`/postman`](./postman/Financial.postman_collection.json). As variáveis `jwt_token` e `categoryId` são preenchidas automaticamente pelos scripts de teste.
+Duas collections Postman estão disponíveis em [`/postman`](./postman):
+
+### Financial - User
+Fluxo completo do usuário comum (registro → login → CRUD → analytics) em [`Financial.postman_collection.json`](./postman/Financial.postman_collection.json). As variáveis `jwt_token`, `categoryId` e `transactionId` são preenchidas automaticamente pelos scripts de teste.
+
+### Financial - Admin
+Fluxo administrativo (login admin → gestão de usuários → categorias globais → analytics) em [`Financial-Admin.postman_collection.json`](./postman/Financial-Admin.postman_collection.json). A variável `admin_token` é preenchida automaticamente no login. Execute o seed com `npm run seed:admin` antes de testar.
 
 ---
 
