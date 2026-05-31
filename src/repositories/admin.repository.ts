@@ -1,4 +1,4 @@
-import { Op, fn, col } from 'sequelize';
+import { Op, fn, col, literal } from 'sequelize';
 import { User, Transaction, Category } from '../models/index.js';
 import type { WhereOptions } from 'sequelize';
 import type { UserInterface } from '../types/user.types.js';
@@ -48,17 +48,22 @@ export const AdminRepository = {
     const user = await User.findByPk(userId);
     if (!user) return { user: null, totalTransactions: 0, totalIncome: 0, totalOutcome: 0 };
 
-    const [totalTransactions, incomeSum, outcomeSum] = await Promise.all([
-      Transaction.count({ where: { userId } }),
-      Transaction.sum('amount', { where: { userId, type: 'income' } }),
-      Transaction.sum('amount', { where: { userId, type: 'outcome' } }),
-    ]);
+    const [result] = await Transaction.findAll({
+      where: { userId },
+      attributes: [
+        [fn('COUNT', col('id')), 'totalTransactions'],
+        [fn('SUM', literal(`CASE WHEN type = 'income' THEN amount ELSE 0 END`)), 'totalIncome'],
+        [fn('SUM', literal(`CASE WHEN type = 'outcome' THEN amount ELSE 0 END`)), 'totalOutcome'],
+      ],
+      raw: true,
+    });
+    const agg = result as unknown as { totalTransactions: string; totalIncome: string; totalOutcome: string } | undefined;
 
     return {
       user: user.dataValues as UserInterface,
-      totalTransactions,
-      totalIncome: incomeSum || 0,
-      totalOutcome: outcomeSum || 0,
+      totalTransactions: Number(agg?.totalTransactions || 0),
+      totalIncome: Number(agg?.totalIncome || 0),
+      totalOutcome: Number(agg?.totalOutcome || 0),
     };
   },
 
@@ -88,10 +93,12 @@ export const AdminRepository = {
   },
 
   updateUser: async (id: string, data: Partial<UserInterface>): Promise<UserInterface | null> => {
-    const user = await User.findByPk(id);
-    if (!user) return null;
-    await user.update(data);
-    return user.dataValues as UserInterface;
+    const [affectedCount, affectedRows] = await User.update(data, {
+      where: { id },
+      returning: true,
+    });
+    if (affectedCount === 0 || !affectedRows[0]) return null;
+    return affectedRows[0].dataValues as UserInterface;
   },
 
   deleteUser: async (id: string): Promise<boolean> => {
@@ -110,10 +117,12 @@ export const AdminRepository = {
   },
 
   updateGlobalCategory: async (id: string, data: CategoryUpdateInput): Promise<CategoryInterface | null> => {
-    const category = await Category.findOne({ where: { id, userId: null } });
-    if (!category) return null;
-    await category.update(data);
-    return category.dataValues as CategoryInterface;
+    const [affectedCount, affectedRows] = await Category.update(data, {
+      where: { id, userId: null },
+      returning: true,
+    });
+    if (affectedCount === 0 || !affectedRows[0]) return null;
+    return affectedRows[0].dataValues as CategoryInterface;
   },
 
   deleteGlobalCategory: async (id: string): Promise<boolean> => {
