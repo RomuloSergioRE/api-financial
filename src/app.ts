@@ -70,11 +70,8 @@ app.use((req: Request, res: Response) => {
 });
 
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
-  console.error('🚨 Global Error Intercepted:', error);
-  
-  res.status(error.status || 500).json({
-    error: error.message || 'Internal Server Error'
-  });
+  console.error('Global Error Intercepted:', error);
+  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 export default app;
