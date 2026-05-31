@@ -1,6 +1,6 @@
 import { UserRepository } from '../repositories/user.repository.js';
 import { JwtUtil } from '../utils/jwt.util.js';
-import type { UserCreation, UserInterface } from '../types/user.types.js';
+import type { UserCreation, UserInterface, UserUpdateInput } from '../types/user.types.js';
 import { SecurityHash } from '../utils/securityHash.util.js';
 
 type UserDTO = Omit<UserInterface, 'password' | 'deletedAt'>;
@@ -62,5 +62,36 @@ export const AuthService = {
             role: decoded.role,
             status: decoded.status,
         });
+    },
+
+    getProfile: async (userId: string): Promise<UserDTO> => {
+        const user = await UserRepository.findById(userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+        return mapToUserDTO(user);
+    },
+
+    updateProfile: async (userId: string, data: UserUpdateInput): Promise<UserDTO> => {
+        const updated = await UserRepository.update(userId, data);
+        if (!updated) {
+            throw new Error('User not found');
+        }
+        return mapToUserDTO(updated);
+    },
+
+    updatePassword: async (userId: string, currentPassword: string, newPassword: string): Promise<void> => {
+        const user = await UserRepository.findById(userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        const isPasswordValid = await SecurityHash.comparePassword(currentPassword, user.password);
+        if (!isPasswordValid) {
+            throw new Error('Current password is incorrect');
+        }
+
+        const hashedPassword = await SecurityHash.hashPassword(newPassword);
+        await UserRepository.update(userId, { password: hashedPassword });
     }
 };
