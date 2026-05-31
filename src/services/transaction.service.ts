@@ -1,5 +1,6 @@
 import { TransactionRepository } from '../repositories/transaction.repository.js';
 import type { TransactionCreateInput, TransactionUpdateInput, TransactionDTO, TransactionInterface } from '../types/transaction.types.js';
+import { BusinessError } from '../utils/errors.js';
 
 const mapToTransactionDTO = (transaction: TransactionInterface): TransactionDTO => {
   const { deletedAt, ...transactionDto } = transaction;
@@ -25,7 +26,7 @@ export const TransactionService = {
   update: async (id: string, userId: string, data: TransactionUpdateInput): Promise<TransactionDTO> => {
     const updated = await TransactionRepository.update(id, userId, data);
     if (!updated) {
-      throw new Error('Transaction not found or unauthorized');
+      throw new BusinessError('Transaction not found or unauthorized', 404);
     }
     return mapToTransactionDTO(updated);
   },
@@ -33,7 +34,7 @@ export const TransactionService = {
   delete: async (id: string, userId: string): Promise<void> => {
     const success = await TransactionRepository.delete(id, userId);
     if (!success) {
-      throw new Error('Transaction not found or unauthorized');
+      throw new BusinessError('Transaction not found or unauthorized', 404);
     }
   },
 };

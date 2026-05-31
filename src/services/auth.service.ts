@@ -2,6 +2,7 @@ import { UserRepository } from '../repositories/user.repository.js';
 import { JwtUtil } from '../utils/jwt.util.js';
 import type { UserCreation, UserInterface, UserUpdateInput } from '../types/user.types.js';
 import { SecurityHash } from '../utils/securityHash.util.js';
+import { BusinessError } from '../utils/errors.js';
 
 type UserDTO = Omit<UserInterface, 'password' | 'deletedAt'>;
 
@@ -17,7 +18,7 @@ export const AuthService = {
         const userExists = await UserRepository.findByEmailWithDeleted(email);
         
         if (userExists) {
-            throw new Error('Email already registered');
+            throw new BusinessError('Registration failed', 400);
         }
 
         const hashedPassword = await SecurityHash.hashPassword(password);
@@ -35,12 +36,12 @@ export const AuthService = {
         const user = await UserRepository.findByEmail(email);
         
         if (!user || !user.password) {
-            throw new Error('Invalid email or password');
+            throw new BusinessError('Invalid email or password', 401);
         }
 
         const isPasswordValid = await SecurityHash.comparePassword(password, user.password);
         if (!isPasswordValid) {
-            throw new Error('Invalid email or password');
+            throw new BusinessError('Invalid email or password', 401);
         }
 
         const token = JwtUtil.generateToken({
@@ -55,8 +56,12 @@ export const AuthService = {
         };
     },
 
-    refreshToken: (token: string): string => {
+    refreshToken: async (token: string): Promise<string> => {
         const decoded = JwtUtil.verifyToken(token);
+        const user = await UserRepository.findById(decoded.userId);
+        if (!user || user.status !== 'active') {
+            throw new BusinessError('Invalid or expired token', 401);
+        }
         return JwtUtil.generateToken({
             userId: decoded.userId,
             role: decoded.role,
@@ -67,7 +72,7 @@ export const AuthService = {
     getProfile: async (userId: string): Promise<UserDTO> => {
         const user = await UserRepository.findById(userId);
         if (!user) {
-            throw new Error('User not found');
+            throw new BusinessError('User not found', 404);
         }
         return mapToUserDTO(user);
     },
@@ -75,7 +80,7 @@ export const AuthService = {
     updateProfile: async (userId: string, data: UserUpdateInput): Promise<UserDTO> => {
         const updated = await UserRepository.update(userId, data);
         if (!updated) {
-            throw new Error('User not found');
+            throw new BusinessError('User not found', 404);
         }
         return mapToUserDTO(updated);
     },
@@ -83,12 +88,12 @@ export const AuthService = {
     updatePassword: async (userId: string, currentPassword: string, newPassword: string): Promise<void> => {
         const user = await UserRepository.findById(userId);
         if (!user) {
-            throw new Error('User not found');
+            throw new BusinessError('User not found', 404);
         }
 
         const isPasswordValid = await SecurityHash.comparePassword(currentPassword, user.password);
         if (!isPasswordValid) {
-            throw new Error('Current password is incorrect');
+            throw new BusinessError('Current password is incorrect', 400);
         }
 
         const hashedPassword = await SecurityHash.hashPassword(newPassword);

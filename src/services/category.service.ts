@@ -1,5 +1,6 @@
 import { CategoryRepository } from '../repositories/category.repository.js';
 import type { CategoryCreateInput, CategoryUpdateInput, CategoryDTO, CategoryInterface } from '../types/category.types.js';
+import { BusinessError } from '../utils/errors.js';
 
 const mapToCategoryDTO = (category: CategoryInterface): CategoryDTO => {
   const { deletedAt, ...categoryDto } = category;
@@ -25,7 +26,7 @@ export const CategoryService = {
     update: async (id: string, userId: string, data: CategoryUpdateInput): Promise<CategoryDTO> => {
         const updated = await CategoryRepository.update(id, userId, data);
         if (!updated) {
-            throw new Error('Category not found, unauthorized, or it is a system default category');
+            throw new BusinessError('Category not found, unauthorized, or it is a system default category', 404);
         }
         return mapToCategoryDTO(updated);
     },
@@ -33,7 +34,7 @@ export const CategoryService = {
     delete: async (id: string, userId: string): Promise<void> => {
         const success = await CategoryRepository.delete(id, userId);
         if (!success) {
-            throw new Error('Category not found, unauthorized, or it is a system default category');
+            throw new BusinessError('Category not found, unauthorized, or it is a system default category', 404);
         }
     }
 };
