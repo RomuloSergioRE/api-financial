@@ -44,11 +44,12 @@ export const TransactionRepository = {
   },
 
   update: async (id: string, userId: string, data: TransactionUpdateInput): Promise<TransactionInterface | null> => {
-    const transaction = await Transaction.findOne({ where: { id, userId } });
-    if (!transaction) return null;
-    
-    await transaction.update(data);
-    return transaction.dataValues as TransactionInterface;
+    const [affectedCount, affectedRows] = await Transaction.update(data, {
+      where: { id, userId },
+      returning: true,
+    });
+    if (affectedCount === 0 || !affectedRows[0]) return null;
+    return affectedRows[0].dataValues as TransactionInterface;
   },
 
   delete: async (id: string, userId: string): Promise<boolean> => {

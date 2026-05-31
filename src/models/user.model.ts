@@ -58,6 +58,14 @@ User.init(
         unique: true,
         fields: ['email'],
         name: 'users_email_unique_idx'
+      },
+      {
+        fields: ['role'],
+        name: 'users_role_idx'
+      },
+      {
+        fields: ['status'],
+        name: 'users_status_idx'
       }
     ]
   }
