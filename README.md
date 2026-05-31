@@ -83,6 +83,9 @@ O projeto segue uma arquitetura em camadas com separação clara de responsabili
 | `POST` | `/auth/register` | Cadastrar novo usuário | ❌ |
 | `POST` | `/auth/login` | Login e retorno do JWT (rate limit: 5/min) | ❌ |
 | `POST` | `/auth/refresh` | Renovar token JWT | ❌ |
+| `GET` | `/auth/me` | Retorna dados do perfil do usuário logado | ✅ |
+| `PUT` | `/auth/profile` | Atualizar nome e/ou email | ✅ |
+| `PUT` | `/auth/password` | Alterar a senha | ✅ |
 
 ### Transações
 
