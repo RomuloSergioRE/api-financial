@@ -4,6 +4,7 @@ import { AuditService } from './audit.service.js';
 import type { UserInterface, Role, Status } from '../types/user.types.js';
 import type { CategoryInterface, CategoryCreateInput, CategoryUpdateInput } from '../types/category.types.js';
 import type { CategoryShareDTO } from '../types/analytics.types.js';
+import { BusinessError } from '../utils/errors.js';
 
 type UserDTO = Omit<UserInterface, 'password' | 'deletedAt'>;
 
@@ -14,7 +15,7 @@ const mapUserDTO = (user: UserInterface): UserDTO => {
 
 function assertNotSelf(targetId: string, adminId: string, action: string): void {
   if (targetId === adminId) {
-    throw new Error(`Cannot ${action} your own account.`);
+    throw new BusinessError(`Cannot ${action} your own account.`, 400);
   }
 }
 
@@ -48,7 +49,7 @@ export const AdminService = {
   updateUserStatus: async (targetId: string, status: Status, adminId: string): Promise<UserDTO> => {
     assertNotSelf(targetId, adminId, 'update your own status');
     const updated = await AdminRepository.updateUser(targetId, { status });
-    if (!updated) throw new Error('User not found');
+    if (!updated) throw new BusinessError('User not found', 404);
     await AuditService.log(adminId, 'update_user_status', targetId, 'user', `Status changed to ${status}`);
     return mapUserDTO(updated);
   },
@@ -56,7 +57,7 @@ export const AdminService = {
   updateUserRole: async (targetId: string, role: Role, adminId: string): Promise<UserDTO> => {
     assertNotSelf(targetId, adminId, 'update your own role');
     const updated = await AdminRepository.updateUser(targetId, { role });
-    if (!updated) throw new Error('User not found');
+    if (!updated) throw new BusinessError('User not found', 404);
     await AuditService.log(adminId, 'update_user_role', targetId, 'user', `Role changed to ${role}`);
     return mapUserDTO(updated);
   },
@@ -64,7 +65,7 @@ export const AdminService = {
   deleteUser: async (targetId: string, adminId: string): Promise<void> => {
     assertNotSelf(targetId, adminId, 'delete');
     const success = await AdminRepository.deleteUser(targetId);
-    if (!success) throw new Error('User not found');
+    if (!success) throw new BusinessError('User not found', 404);
     await AuditService.log(adminId, 'delete_user', targetId, 'user', 'User soft deleted');
   },
 
@@ -80,7 +81,7 @@ export const AdminService = {
 
   deleteGlobalCategory: async (id: string): Promise<void> => {
     const deleted = await AdminRepository.deleteGlobalCategory(id);
-    if (!deleted) throw new Error('Global category not found');
+    if (!deleted) throw new BusinessError('Global category not found', 404);
   },
 
   getOverview: async (): Promise<{

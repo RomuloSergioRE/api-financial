@@ -37,15 +37,17 @@ export const CategoryRepository = {
         return category ? (category.dataValues as CategoryInterface) : null;
     },
 
-    update: async (id: string, userId: string, data: CategoryUpdateInput): Promise<CategoryInterface | null> => {
-        const category = await Category.findOne({ where: { id, userId } });
-        if (!category) return null;
-        await category.update(data);
-        return category.dataValues as CategoryInterface;
-    },
+  update: async (id: string, userId: string, data: CategoryUpdateInput): Promise<CategoryInterface | null> => {
+    const [affectedCount, affectedRows] = await Category.update(data, {
+      where: { id, userId },
+      returning: true,
+    });
+    if (affectedCount === 0 || !affectedRows[0]) return null;
+    return affectedRows[0].dataValues as CategoryInterface;
+  },
 
-    delete: async (id: string, userId: string): Promise<boolean> => {
-        const deletedRows = await Category.destroy({ where: { id, userId } });
-        return deletedRows > 0;
-    }
+  delete: async (id: string, userId: string): Promise<boolean> => {
+    const deletedRows = await Category.destroy({ where: { id, userId } });
+    return deletedRows > 0;
+  }
 };

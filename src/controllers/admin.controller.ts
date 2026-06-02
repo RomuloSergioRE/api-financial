@@ -1,5 +1,4 @@
 import type { Request, Response } from 'express';
-import { z } from 'zod';
 import { AdminService } from '../services/admin.service.js';
 import type { CategoryUpdateInput } from '../types/category.types.js';
 import {
@@ -9,6 +8,7 @@ import {
   updateGlobalCategorySchema,
   listUsersQuerySchema,
 } from '../validators/admin.validator.js';
+import { handleControllerError } from '../utils/errors.js';
 
 export const AdminController = {
   listUsers: async (req: Request, res: Response): Promise<void> => {
@@ -25,11 +25,7 @@ export const AdminController = {
         pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
       });
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: 'Validation Error', details: error.issues });
-        return;
-      }
-      res.status(500).json({ error: 'Internal Server Error' });
+      handleControllerError(res, error);
     }
   },
 
@@ -43,7 +39,7 @@ export const AdminController = {
       }
       res.status(200).json(details);
     } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
+      handleControllerError(res, error);
     }
   },
 
@@ -54,12 +50,7 @@ export const AdminController = {
       const updated = await AdminService.updateUserStatus(targetId, status, req.user!.id);
       res.status(200).json(updated);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: 'Validation Error', details: error.issues });
-        return;
-      }
-      const message = error instanceof Error ? error.message : 'Internal Server Error';
-      res.status(400).json({ error: message });
+      handleControllerError(res, error);
     }
   },
 
@@ -70,12 +61,7 @@ export const AdminController = {
       const updated = await AdminService.updateUserRole(targetId, role, req.user!.id);
       res.status(200).json(updated);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: 'Validation Error', details: error.issues });
-        return;
-      }
-      const message = error instanceof Error ? error.message : 'Internal Server Error';
-      res.status(400).json({ error: message });
+      handleControllerError(res, error);
     }
   },
 
@@ -85,8 +71,7 @@ export const AdminController = {
       await AdminService.deleteUser(targetId, req.user!.id);
       res.status(204).send();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Internal Server Error';
-      res.status(400).json({ error: message });
+      handleControllerError(res, error);
     }
   },
 
@@ -100,11 +85,7 @@ export const AdminController = {
       });
       res.status(201).json(category);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: 'Validation Error', details: error.issues });
-        return;
-      }
-      res.status(500).json({ error: 'Internal Server Error' });
+      handleControllerError(res, error);
     }
   },
 
@@ -123,11 +104,7 @@ export const AdminController = {
       }
       res.status(200).json(updated);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: 'Validation Error', details: error.issues });
-        return;
-      }
-      res.status(500).json({ error: 'Internal Server Error' });
+      handleControllerError(res, error);
     }
   },
 
@@ -137,8 +114,7 @@ export const AdminController = {
       await AdminService.deleteGlobalCategory(id);
       res.status(204).send();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Internal Server Error';
-      res.status(400).json({ error: message });
+      handleControllerError(res, error);
     }
   },
 
@@ -147,7 +123,7 @@ export const AdminController = {
       const overview = await AdminService.getOverview();
       res.status(200).json(overview);
     } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
+      handleControllerError(res, error);
     }
   },
 
@@ -161,7 +137,7 @@ export const AdminController = {
       }
       res.status(200).json(analytics);
     } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
+      handleControllerError(res, error);
     }
   },
 };

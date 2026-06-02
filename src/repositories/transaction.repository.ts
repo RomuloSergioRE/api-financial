@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { Transaction, Category } from '../models/index.js'; 
 import type { TransactionInterface, TransactionCreateInput, TransactionUpdateInput } from '../types/transaction.types.js';
 
@@ -7,9 +8,18 @@ export const TransactionRepository = {
     return transaction.dataValues as TransactionInterface;
   },
 
-  findByUser: async (userId: string, pagination?: { offset: number; limit: number }): Promise<{ rows: TransactionInterface[]; total: number }> => {
+  findByUser: async (userId: string, pagination?: { offset: number; limit: number }, categoryId?: string, startDate?: string, endDate?: string, search?: string): Promise<{ rows: TransactionInterface[]; total: number }> => {
     const { rows, count } = await Transaction.findAndCountAll({ 
-      where: { userId },
+      where: {
+        userId,
+        ...(categoryId && { categoryId }),
+        ...(startDate && endDate && {
+          date: { [Op.gte]: new Date(startDate), [Op.lte]: new Date(endDate) },
+        }),
+        ...(search && {
+          description: { [Op.iLike]: `%${search}%` },
+        }),
+      },
       include: [
         {
           model: Category,
@@ -44,11 +54,12 @@ export const TransactionRepository = {
   },
 
   update: async (id: string, userId: string, data: TransactionUpdateInput): Promise<TransactionInterface | null> => {
-    const transaction = await Transaction.findOne({ where: { id, userId } });
-    if (!transaction) return null;
-    
-    await transaction.update(data);
-    return transaction.dataValues as TransactionInterface;
+    const [affectedCount, affectedRows] = await Transaction.update(data, {
+      where: { id, userId },
+      returning: true,
+    });
+    if (affectedCount === 0 || !affectedRows[0]) return null;
+    return affectedRows[0].dataValues as TransactionInterface;
   },
 
   delete: async (id: string, userId: string): Promise<boolean> => {

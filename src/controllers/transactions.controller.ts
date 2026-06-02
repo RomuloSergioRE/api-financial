@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
-import { z } from 'zod';
 import { TransactionService } from '../services/transaction.service.js';
 import type { TransactionUpdateInput } from '../types/transaction.types.js';
 import { createTransactionSchema, updateTransactionSchema } from '../validators/transaction.validator.js';
+import { handleControllerError } from '../utils/errors.js';
 
 export const TransactionController = {
   create: async (req: Request, res: Response): Promise<void> => {
@@ -24,12 +24,8 @@ export const TransactionController = {
       const transaction = await TransactionService.create(userId, transactionData);
       
       res.status(201).json(transaction);
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: 'Validation Error', details: error.issues });
-        return;
-      }
-      res.status(400).json({ error: error.message });
+    } catch (error) {
+      handleControllerError(res, error);
     }
   },
 
@@ -43,16 +39,20 @@ export const TransactionController = {
       const userId = req.user.id;
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
+      const categoryId = req.query.categoryId as string | undefined;
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
+      const search = req.query.search as string | undefined;
       const offset = (page - 1) * limit;
 
-      const { rows, total } = await TransactionService.findByUser(userId, { offset, limit });
+      const { rows, total } = await TransactionService.findByUser(userId, { offset, limit }, categoryId, startDate, endDate, search);
       
       res.status(200).json({
         data: rows,
         pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
       });
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
+    } catch (error) {
+      handleControllerError(res, error);
     }
   },
 
@@ -73,8 +73,8 @@ export const TransactionController = {
       }
       
       res.status(200).json(transaction);
-    } catch (error: any) {
-      res.status(400).json({ error: error.message }); 
+    } catch (error) {
+      handleControllerError(res, error);
     }
   },
 
@@ -97,12 +97,8 @@ export const TransactionController = {
       const updated = await TransactionService.update(id, userId, updateData);
       
       res.status(200).json(updated);
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ error: 'Validation Error', details: error.issues });
-        return;
-      }
-      res.status(400).json({ error: error.message });
+    } catch (error) {
+      handleControllerError(res, error);
     }
   },
 
@@ -118,8 +114,8 @@ export const TransactionController = {
       await TransactionService.delete(id, userId);
       
       res.status(204).send();
-    } catch (error: any) {
-      res.status(400).json({ error: error.message });
+    } catch (error) {
+      handleControllerError(res, error);
     }
   },
 };
