@@ -9,6 +9,8 @@ import {
   listUsersQuerySchema,
 } from '../validators/admin.validator.js';
 import { handleControllerError } from '../utils/errors.js';
+import { ExportService } from '../services/export.service.js';
+import { setCsvHeaders } from '../utils/csv.util.js';
 
 export const AdminController = {
   listUsers: async (req: Request, res: Response): Promise<void> => {
@@ -136,6 +138,44 @@ export const AdminController = {
         return;
       }
       res.status(200).json(analytics);
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  exportUsersCSV: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { content, filename } = await ExportService.exportUsersCSV();
+      setCsvHeaders(res, filename);
+      res.status(200).send(content);
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  exportAllTransactionsCSV: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.query.userId as string | undefined;
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
+
+      const { content, filename } = await ExportService.exportAllTransactionsCSV({
+        userId,
+        startDate,
+        endDate,
+      });
+      setCsvHeaders(res, filename);
+      res.status(200).send(content);
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  exportAuditLogsCSV: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { content, filename } = await ExportService.exportAuditLogsCSV();
+      setCsvHeaders(res, filename);
+      res.status(200).send(content);
     } catch (error) {
       handleControllerError(res, error);
     }

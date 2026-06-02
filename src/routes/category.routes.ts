@@ -8,6 +8,8 @@ router.use(authMiddleware);
 
 router.post('/', CategoryController.create);
 router.get('/', CategoryController.getAll);
+router.get('/export/csv', CategoryController.exportCSV);
+router.get('/export/pdf', CategoryController.exportPDF);
 router.get('/:id', CategoryController.getById);
 router.put('/:id', CategoryController.update);
 router.delete('/:id', CategoryController.delete);

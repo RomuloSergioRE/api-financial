@@ -24,4 +24,9 @@ router.delete('/categories/:id', AdminController.deleteGlobalCategory);
 router.get('/analytics/overview', AdminController.getOverview);
 router.get('/analytics/users/:id', AdminController.getUserAnalytics);
 
+// Exports
+router.get('/export/users/csv', AdminController.exportUsersCSV);
+router.get('/export/transactions/csv', AdminController.exportAllTransactionsCSV);
+router.get('/export/audit-logs/csv', AdminController.exportAuditLogsCSV);
+
 export default router;
