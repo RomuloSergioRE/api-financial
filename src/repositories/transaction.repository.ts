@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { Transaction, Category } from '../models/index.js'; 
 import type { TransactionInterface, TransactionCreateInput, TransactionUpdateInput } from '../types/transaction.types.js';
 
@@ -7,9 +8,15 @@ export const TransactionRepository = {
     return transaction.dataValues as TransactionInterface;
   },
 
-  findByUser: async (userId: string, pagination?: { offset: number; limit: number }, categoryId?: string): Promise<{ rows: TransactionInterface[]; total: number }> => {
+  findByUser: async (userId: string, pagination?: { offset: number; limit: number }, categoryId?: string, startDate?: string, endDate?: string): Promise<{ rows: TransactionInterface[]; total: number }> => {
     const { rows, count } = await Transaction.findAndCountAll({ 
-      where: { userId, ...(categoryId && { categoryId }) },
+      where: {
+        userId,
+        ...(categoryId && { categoryId }),
+        ...(startDate && endDate && {
+          date: { [Op.gte]: new Date(startDate), [Op.lte]: new Date(endDate) },
+        }),
+      },
       include: [
         {
           model: Category,
