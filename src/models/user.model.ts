@@ -13,6 +13,7 @@ class User extends Model<Omit<UserInterface, SequelizeTimestamps>, UserCreation>
   declare password: string;
   declare role: Role;
   declare status: Status;
+  declare tokenVersion: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
   declare readonly deletedAt: Date | null; 
@@ -46,6 +47,11 @@ User.init(
       type: DataTypes.ENUM('active', 'inactive', 'suspended'),
       defaultValue: 'active',
     },
+    tokenVersion: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
   },
   {
     sequelize,
@@ -58,6 +64,14 @@ User.init(
         unique: true,
         fields: ['email'],
         name: 'users_email_unique_idx'
+      },
+      {
+        fields: ['role'],
+        name: 'users_role_idx'
+      },
+      {
+        fields: ['status'],
+        name: 'users_status_idx'
       }
     ]
   }

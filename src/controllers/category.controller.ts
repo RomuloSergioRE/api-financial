@@ -1,8 +1,10 @@
 import type { Request, Response } from 'express';
-import { z } from 'zod';
 import { CategoryService } from '../services/category.service.js';
 import type { CategoryUpdateInput } from '../types/category.types.js';
 import { createCategorySchema, updateCategorySchema } from '../validators/category.validator.js';
+import { handleControllerError } from '../utils/errors.js';
+import { ExportService } from '../services/export.service.js';
+import { setCsvHeaders } from '../utils/csv.util.js';
 
 export const CategoryController = {
     create: async (req: Request, res: Response): Promise<void> => {
@@ -20,12 +22,8 @@ export const CategoryController = {
               color: validated.color ?? null,
             });
             res.status(201).json(category);
-        } catch (error: any) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ error: 'Validation Error', details: error.issues });
-                return;
-            }
-            res.status(400).json({ error: error.message });
+        } catch (error) {
+            handleControllerError(res, error);
         }
     },
 
@@ -46,8 +44,8 @@ export const CategoryController = {
                 data: rows,
                 pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
             });
-        } catch (error: any) {
-            res.status(400).json({ error: error.message });
+        } catch (error) {
+            handleControllerError(res, error);
         }
     },
 
@@ -68,8 +66,8 @@ export const CategoryController = {
             }
 
             res.status(200).json(category);
-        } catch (error: any) {
-            res.status(400).json({ error: error.message });
+        } catch (error) {
+            handleControllerError(res, error);
         }
     },
 
@@ -90,12 +88,8 @@ export const CategoryController = {
             const updated = await CategoryService.update(id, userId, updateData);
             
             res.status(200).json(updated);
-        } catch (error: any) {
-            if (error instanceof z.ZodError) {
-                res.status(400).json({ error: 'Validation Error', details: error.issues });
-                return;
-            }
-            res.status(400).json({ error: error.message });
+        } catch (error) {
+            handleControllerError(res, error);
         }
     },
 
@@ -111,8 +105,42 @@ export const CategoryController = {
             await CategoryService.delete(id, userId);
             
             res.status(204).send();
-        } catch (error: any) {
-            res.status(400).json({ error: error.message });
+        } catch (error) {
+            handleControllerError(res, error);
         }
-    } 
+    },
+
+    exportCSV: async (req: Request, res: Response): Promise<void> => {
+        try {
+            if (!req.user?.id) {
+                res.status(401).json({ error: 'Unauthorized: User missing' });
+                return;
+            }
+
+            const { content, filename } = await ExportService.exportCategoriesCSV(req.user.id);
+            setCsvHeaders(res, filename);
+            res.status(200).send(content);
+        } catch (error) {
+            handleControllerError(res, error);
+        }
+    },
+
+    exportPDF: async (req: Request, res: Response): Promise<void> => {
+        try {
+            if (!req.user?.id) {
+                res.status(401).json({ error: 'Unauthorized: User missing' });
+                return;
+            }
+
+            const { buffer, filename } = await ExportService.exportCategoriesPDF(req.user.id);
+
+            res
+                .contentType('application/pdf')
+                .set('Content-Disposition', `inline; filename="${filename}"`)
+                .status(200)
+                .send(buffer);
+        } catch (error) {
+            handleControllerError(res, error);
+        }
+    }
 };

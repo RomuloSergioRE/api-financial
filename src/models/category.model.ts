@@ -61,6 +61,10 @@ Category.init(
         fields: ['userId', 'deleted_at'],
         name: 'categories_user_id_deleted_at_idx',
       },
+      {
+        fields: ['name'],
+        name: 'categories_name_idx',
+      },
     ],
   }
 );

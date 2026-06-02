@@ -143,6 +143,90 @@ export function getSwaggerDocument(renderUrl?: string): OpenAPIV3.Document {
         },
       },
 
+      '/auth/me': {
+        get: {
+          summary: 'Retorna os dados do perfil do usuário logado',
+          tags: ['Autenticação'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            '200': {
+              description: 'Dados do usuário (sem senha).',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      name: { type: 'string' },
+                      email: { type: 'string' },
+                      role: { type: 'string' },
+                      status: { type: 'string' },
+                      createdAt: { type: 'string' },
+                      updatedAt: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+            '401': { description: 'Token JWT ausente ou expirado.' },
+            '404': { description: 'Usuário não encontrado.' },
+          },
+        },
+      },
+      '/auth/profile': {
+        put: {
+          summary: 'Atualiza nome e/ou email do perfil',
+          tags: ['Autenticação'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string', example: 'Novo Nome' },
+                    email: { type: 'string', example: 'novo@email.com' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '200': { description: 'Perfil atualizado com sucesso.' },
+            '400': { description: 'Dados inválidos.' },
+            '401': { description: 'Token JWT ausente ou expirado.' },
+          },
+        },
+      },
+      '/auth/password': {
+        put: {
+          summary: 'Altera a senha do usuário logado',
+          tags: ['Autenticação'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['currentPassword', 'newPassword'],
+                  properties: {
+                    currentPassword: { type: 'string', example: 'senhaAtual123' },
+                    newPassword: { type: 'string', example: 'novaSenha456' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '200': { description: 'Senha alterada com sucesso.' },
+            '400': { description: 'Senha atual incorreta ou dados inválidos.' },
+            '401': { description: 'Token JWT ausente ou expirado.' },
+          },
+        },
+      },
+
       // === TRANSAÇÕES ===
       '/transactions': {
         get: {

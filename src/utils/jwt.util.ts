@@ -10,6 +10,7 @@ interface TokenPayload {
   userId: string;
   role: 'admin' | 'user' | 'company';
   status: string;
+  tokenVersion: number;
 }
 
 type StrictSignOptions = Omit<jwt.SignOptions, 'expiresIn'> & {

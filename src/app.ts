@@ -6,8 +6,13 @@ import { rateLimit } from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import { getSwaggerDocument } from './config/swagger.js'; 
 import routes from './routes/index.js'; 
+import { requestIdMiddleware } from './middlewares/requestId.middleware.js';
+import { logger, getRequestId } from './utils/logger.js';
+import sequelize from './config/db.js';
 
 const app: Application = express();
+
+app.use(requestIdMiddleware);
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -47,7 +52,7 @@ const limiter = rateLimit({
   limit: 100, 
   standardHeaders: 'draft-7', 
   legacyHeaders: false, 
-  message: { error: 'Muitas requisições vindas deste IP. Tente novamente em 15 minutos.' }
+  message: { error: 'Too many requests from this IP. Please try again in 15 minutes.' }
 });
 app.use(limiter);
 
@@ -55,12 +60,21 @@ const renderUrl = process.env.RENDER_EXTERNAL_URL || process.env.SWAGGER_SERVER_
 const swaggerDoc = getSwaggerDocument(renderUrl);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'Servidor rodando perfeitamente!',
-    timestamp: new Date().toISOString()
-  });
+app.get('/health', async (req: Request, res: Response) => {
+  try {
+    await sequelize.authenticate();
+    res.status(200).json({
+      status: 'success',
+      message: 'Server is running!',
+      timestamp: new Date().toISOString()
+    });
+  } catch {
+    res.status(503).json({
+      status: 'error',
+      message: 'Database connection failed',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 app.use(routes);
@@ -70,11 +84,9 @@ app.use((req: Request, res: Response) => {
 });
 
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
-  console.error('🚨 Global Error Intercepted:', error);
-  
-  res.status(error.status || 500).json({
-    error: error.message || 'Internal Server Error'
-  });
+  const requestId = getRequestId();
+  logger.error('Unhandled error in global middleware', error);
+  res.status(500).json({ error: 'Internal Server Error', requestId });
 });
 
 export default app;

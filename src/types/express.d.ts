@@ -1,4 +1,4 @@
-import { UserInterface } from './user.types.ts';
+import { UserInterface } from './user.types.js';
 
 declare global {
   namespace Express {

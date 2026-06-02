@@ -18,16 +18,24 @@ export const UserRepository = {
   },
 
   findById: async (id: string): Promise<UserInterface | null> => {
+    const user = await User.findByPk(id, {
+      attributes: { exclude: ['password'] },
+    });
+    return user ? (user.dataValues as UserInterface) : null;
+  },
+
+  findByIdWithPassword: async (id: string): Promise<UserInterface | null> => {
     const user = await User.findByPk(id);
     return user ? (user.dataValues as UserInterface) : null;
   },
   
   update: async (id: string, updateData: UserUpdateInput): Promise<UserInterface | null> => {
-    const user = await User.findByPk(id);
-    if (!user) return null;
-    
-    await user.update(updateData);
-    return user.dataValues as UserInterface;
+    const [affectedCount, affectedRows] = await User.update(updateData, {
+      where: { id },
+      returning: true,
+    });
+    if (affectedCount === 0 || !affectedRows[0]) return null;
+    return affectedRows[0].dataValues as UserInterface;
   },
 
   delete: async (id: string): Promise<boolean> => {

@@ -2,6 +2,7 @@ import { Op, fn, col } from 'sequelize';
 import type { WhereOptions } from 'sequelize'; 
 import { Transaction, Category } from '../models/index.js';
 import type { BalanceSummaryDTO, AnalyticsFilterInput, CategoryShareDTO } from '../types/analytics.types.js';
+import { getCached, setCache, clearCache } from '../utils/cache.js';
 
 type AggregateRow = { type: string; total: string };
 type CategoryAggRow = {
@@ -43,6 +44,10 @@ function buildWhereCondition(userId: string, filters: AnalyticsFilterInput): Whe
 export const AnalyticsService = {
 
   getBalanceSummary: async (userId: string, filters: AnalyticsFilterInput): Promise<BalanceSummaryDTO> => {
+    const cacheKey = `balance:${userId}:${JSON.stringify(filters)}`;
+    const cached = getCached<BalanceSummaryDTO>(cacheKey);
+    if (cached) return cached;
+
     const whereCondition = buildWhereCondition(userId, filters);
 
     const results = await Transaction.findAll({
@@ -59,14 +64,21 @@ export const AnalyticsService = {
     const totalIncome = Number(rows.find(r => r.type === 'income')?.total || 0);
     const totalOutcome = Number(rows.find(r => r.type === 'outcome')?.total || 0);
 
-    return {
+    const data: BalanceSummaryDTO = {
       totalIncome,
       totalOutcome,
       netBalance: totalIncome - totalOutcome,
     };
+
+    setCache(cacheKey, data, 30_000);
+    return data;
   },
 
   getCategoryDistribution: async (userId: string, filters: AnalyticsFilterInput): Promise<CategoryShareDTO[]> => {
+    const cacheKey = `categories:${userId}:${JSON.stringify(filters)}`;
+    const cached = getCached<CategoryShareDTO[]>(cacheKey);
+    if (cached) return cached;
+
     const whereCondition = buildWhereCondition(userId, filters);
 
     const results = await Transaction.findAll({
@@ -91,7 +103,7 @@ export const AnalyticsService = {
 
     if (totalPeriod === 0) return [];
 
-    return rows.map((item): CategoryShareDTO => {
+    const data: CategoryShareDTO[] = rows.map((item): CategoryShareDTO => {
       const totalAmount = Number(item.total);
       const percentage = Number(((totalAmount / totalPeriod) * 100).toFixed(2));
 
@@ -104,5 +116,13 @@ export const AnalyticsService = {
         percentage,
       };
     });
+
+    setCache(cacheKey, data, 30_000);
+    return data;
+  },
+
+  invalidateCache: (userId: string): void => {
+    clearCache(`balance:${userId}`);
+    clearCache(`categories:${userId}`);
   },
 };
