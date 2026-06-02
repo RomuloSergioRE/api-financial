@@ -40,9 +40,11 @@ export const TransactionController = {
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
       const categoryId = req.query.categoryId as string | undefined;
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
       const offset = (page - 1) * limit;
 
-      const { rows, total } = await TransactionService.findByUser(userId, { offset, limit }, categoryId);
+      const { rows, total } = await TransactionService.findByUser(userId, { offset, limit }, categoryId, startDate, endDate);
       
       res.status(200).json({
         data: rows,
