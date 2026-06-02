@@ -7,9 +7,9 @@ export const TransactionRepository = {
     return transaction.dataValues as TransactionInterface;
   },
 
-  findByUser: async (userId: string, pagination?: { offset: number; limit: number }): Promise<{ rows: TransactionInterface[]; total: number }> => {
+  findByUser: async (userId: string, pagination?: { offset: number; limit: number }, categoryId?: string): Promise<{ rows: TransactionInterface[]; total: number }> => {
     const { rows, count } = await Transaction.findAndCountAll({ 
-      where: { userId },
+      where: { userId, ...(categoryId && { categoryId }) },
       include: [
         {
           model: Category,
