@@ -4,10 +4,10 @@ import type { UserCreation, UserInterface, UserUpdateInput } from '../types/user
 import { SecurityHash } from '../utils/securityHash.util.js';
 import { BusinessError } from '../utils/errors.js';
 
-type UserDTO = Omit<UserInterface, 'password' | 'deletedAt'>;
+type UserDTO = Omit<UserInterface, 'password' | 'tokenVersion' | 'deletedAt'>;
 
 const mapToUserDTO = (user: UserInterface): UserDTO => {
-  const { password, deletedAt, ...userDto } = user; 
+  const { password, tokenVersion, deletedAt, ...userDto } = user; 
   return userDto;
 };
 
@@ -48,6 +48,7 @@ export const AuthService = {
             userId: user.id,
             role: user.role,
             status: user.status,
+            tokenVersion: user.tokenVersion,
         });
 
         return {
@@ -62,10 +63,14 @@ export const AuthService = {
         if (!user || user.status !== 'active') {
             throw new BusinessError('Invalid or expired token', 401);
         }
+        if (user.tokenVersion !== decoded.tokenVersion) {
+            throw new BusinessError('Token revoked. Please log in again.', 401);
+        }
         return JwtUtil.generateToken({
-            userId: decoded.userId,
-            role: decoded.role,
-            status: decoded.status,
+            userId: user.id,
+            role: user.role,
+            status: user.status,
+            tokenVersion: user.tokenVersion,
         });
     },
 
@@ -86,7 +91,7 @@ export const AuthService = {
     },
 
     updatePassword: async (userId: string, currentPassword: string, newPassword: string): Promise<void> => {
-        const user = await UserRepository.findById(userId);
+        const user = await UserRepository.findByIdWithPassword(userId);
         if (!user) {
             throw new BusinessError('User not found', 404);
         }
@@ -97,6 +102,7 @@ export const AuthService = {
         }
 
         const hashedPassword = await SecurityHash.hashPassword(newPassword);
-        await UserRepository.update(userId, { password: hashedPassword });
+        const nextVersion = user.tokenVersion + 1;
+        await UserRepository.update(userId, { password: hashedPassword, tokenVersion: nextVersion });
     }
 };

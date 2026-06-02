@@ -1,5 +1,6 @@
 import type { Response } from 'express';
 import { z } from 'zod';
+import { logger, getRequestId } from './logger.js';
 
 export class BusinessError extends Error {
   statusCode: number;
@@ -20,6 +21,7 @@ export function handleControllerError(res: Response, error: unknown): void {
     res.status(error.statusCode).json({ error: error.message });
     return;
   }
-  console.error('Unhandled error:', error);
-  res.status(500).json({ error: 'Internal Server Error' });
+  const requestId = getRequestId();
+  logger.error('Unhandled controller error', error);
+  res.status(500).json({ error: 'Internal Server Error', requestId });
 }
