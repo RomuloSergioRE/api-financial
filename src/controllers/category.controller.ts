@@ -3,6 +3,8 @@ import { CategoryService } from '../services/category.service.js';
 import type { CategoryUpdateInput } from '../types/category.types.js';
 import { createCategorySchema, updateCategorySchema } from '../validators/category.validator.js';
 import { handleControllerError } from '../utils/errors.js';
+import { ExportService } from '../services/export.service.js';
+import { setCsvHeaders } from '../utils/csv.util.js';
 
 export const CategoryController = {
     create: async (req: Request, res: Response): Promise<void> => {
@@ -106,5 +108,39 @@ export const CategoryController = {
         } catch (error) {
             handleControllerError(res, error);
         }
-    } 
+    },
+
+    exportCSV: async (req: Request, res: Response): Promise<void> => {
+        try {
+            if (!req.user?.id) {
+                res.status(401).json({ error: 'Unauthorized: User missing' });
+                return;
+            }
+
+            const { content, filename } = await ExportService.exportCategoriesCSV(req.user.id);
+            setCsvHeaders(res, filename);
+            res.status(200).send(content);
+        } catch (error) {
+            handleControllerError(res, error);
+        }
+    },
+
+    exportPDF: async (req: Request, res: Response): Promise<void> => {
+        try {
+            if (!req.user?.id) {
+                res.status(401).json({ error: 'Unauthorized: User missing' });
+                return;
+            }
+
+            const { buffer, filename } = await ExportService.exportCategoriesPDF(req.user.id);
+
+            res
+                .contentType('application/pdf')
+                .set('Content-Disposition', `inline; filename="${filename}"`)
+                .status(200)
+                .send(buffer);
+        } catch (error) {
+            handleControllerError(res, error);
+        }
+    }
 };

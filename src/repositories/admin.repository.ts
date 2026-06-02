@@ -45,18 +45,20 @@ export const AdminRepository = {
     totalIncome: number;
     totalOutcome: number;
   }> => {
-    const user = await User.findByPk(userId);
+    const [user, [result]] = await Promise.all([
+      User.findByPk(userId),
+      Transaction.findAll({
+        where: { userId },
+        attributes: [
+          [fn('COUNT', col('id')), 'totalTransactions'],
+          [fn('SUM', literal(`CASE WHEN type = 'income' THEN amount ELSE 0 END`)), 'totalIncome'],
+          [fn('SUM', literal(`CASE WHEN type = 'outcome' THEN amount ELSE 0 END`)), 'totalOutcome'],
+        ],
+        raw: true,
+      }),
+    ]);
     if (!user) return { user: null, totalTransactions: 0, totalIncome: 0, totalOutcome: 0 };
 
-    const [result] = await Transaction.findAll({
-      where: { userId },
-      attributes: [
-        [fn('COUNT', col('id')), 'totalTransactions'],
-        [fn('SUM', literal(`CASE WHEN type = 'income' THEN amount ELSE 0 END`)), 'totalIncome'],
-        [fn('SUM', literal(`CASE WHEN type = 'outcome' THEN amount ELSE 0 END`)), 'totalOutcome'],
-      ],
-      raw: true,
-    });
     const agg = result as unknown as { totalTransactions: string; totalIncome: string; totalOutcome: string } | undefined;
 
     return {

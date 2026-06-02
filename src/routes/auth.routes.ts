@@ -10,7 +10,7 @@ const loginLimiter = rateLimit({
   limit: 5,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  message: { error: 'Muitas tentativas de login. Aguarde 1 minuto.' },
+  message: { error: 'Too many login attempts. Please wait 1 minute.' },
 });
 
 const registerLimiter = rateLimit({
@@ -18,7 +18,7 @@ const registerLimiter = rateLimit({
   limit: 3,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  message: { error: 'Muitas tentativas de registro. Aguarde 1 minuto.' },
+  message: { error: 'Too many registration attempts. Please wait 1 minute.' },
 });
 
 const refreshLimiter = rateLimit({
@@ -26,7 +26,7 @@ const refreshLimiter = rateLimit({
   limit: 10,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  message: { error: 'Muitas tentativas de refresh. Aguarde 1 minuto.' },
+  message: { error: 'Too many refresh attempts. Please wait 1 minute.' },
 });
 
 const passwordLimiter = rateLimit({
@@ -34,7 +34,7 @@ const passwordLimiter = rateLimit({
   limit: 3,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  message: { error: 'Muitas tentativas de alteração de senha. Aguarde 1 minuto.' },
+  message: { error: 'Too many password change attempts. Please wait 1 minute.' },
 });
 
 authRouter.post('/register', registerLimiter, AuthController.register);

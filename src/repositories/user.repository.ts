@@ -18,6 +18,13 @@ export const UserRepository = {
   },
 
   findById: async (id: string): Promise<UserInterface | null> => {
+    const user = await User.findByPk(id, {
+      attributes: { exclude: ['password'] },
+    });
+    return user ? (user.dataValues as UserInterface) : null;
+  },
+
+  findByIdWithPassword: async (id: string): Promise<UserInterface | null> => {
     const user = await User.findByPk(id);
     return user ? (user.dataValues as UserInterface) : null;
   },

@@ -6,10 +6,10 @@ import type { CategoryInterface, CategoryCreateInput, CategoryUpdateInput } from
 import type { CategoryShareDTO } from '../types/analytics.types.js';
 import { BusinessError } from '../utils/errors.js';
 
-type UserDTO = Omit<UserInterface, 'password' | 'deletedAt'>;
+type UserDTO = Omit<UserInterface, 'password' | 'tokenVersion' | 'deletedAt'>;
 
 const mapUserDTO = (user: UserInterface): UserDTO => {
-  const { password, deletedAt, ...dto } = user;
+  const { password, tokenVersion, deletedAt, ...dto } = user;
   return dto;
 };
 
