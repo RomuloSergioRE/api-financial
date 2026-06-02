@@ -3,6 +3,8 @@ import { TransactionService } from '../services/transaction.service.js';
 import type { TransactionUpdateInput } from '../types/transaction.types.js';
 import { createTransactionSchema, updateTransactionSchema } from '../validators/transaction.validator.js';
 import { handleControllerError } from '../utils/errors.js';
+import { ExportService } from '../services/export.service.js';
+import { setCsvHeaders } from '../utils/csv.util.js';
 
 export const TransactionController = {
   create: async (req: Request, res: Response): Promise<void> => {
@@ -114,6 +116,67 @@ export const TransactionController = {
       await TransactionService.delete(id, userId);
       
       res.status(204).send();
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  exportCSV: async (req: Request, res: Response): Promise<void> => {
+    try {
+      if (!req.user?.id) {
+        res.status(401).json({ error: 'Unauthorized: User missing' });
+        return;
+      }
+
+      const categoryId = req.query.categoryId as string | undefined;
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
+      const search = req.query.search as string | undefined;
+
+      const { content, filename } = await ExportService.exportTransactionsCSV(
+        req.user.id,
+        { categoryId, startDate, endDate, search }
+      );
+
+      setCsvHeaders(res, filename);
+      res.status(200).send(content);
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  exportTemplate: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { content, filename } = ExportService.getTransactionCSVTemplate();
+      setCsvHeaders(res, filename);
+      res.status(200).send(content);
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  exportPDF: async (req: Request, res: Response): Promise<void> => {
+    try {
+      if (!req.user?.id) {
+        res.status(401).json({ error: 'Unauthorized: User missing' });
+        return;
+      }
+
+      const categoryId = req.query.categoryId as string | undefined;
+      const startDate = req.query.startDate as string | undefined;
+      const endDate = req.query.endDate as string | undefined;
+      const search = req.query.search as string | undefined;
+
+      const { buffer, filename } = await ExportService.exportTransactionsPDF(
+        req.user.id,
+        { categoryId, startDate, endDate, search }
+      );
+
+      res
+        .contentType('application/pdf')
+        .set('Content-Disposition', `inline; filename="${filename}"`)
+        .status(200)
+        .send(buffer);
     } catch (error) {
       handleControllerError(res, error);
     }
