@@ -13,8 +13,8 @@ export const TransactionService = {
     return mapToTransactionDTO(transaction);
   },
 
-  findByUser: async (userId: string, pagination?: { offset: number; limit: number }, categoryId?: string, startDate?: string, endDate?: string): Promise<{ rows: TransactionDTO[]; total: number }> => {
-    const { rows, total } = await TransactionRepository.findByUser(userId, pagination, categoryId, startDate, endDate);
+  findByUser: async (userId: string, pagination?: { offset: number; limit: number }, categoryId?: string, startDate?: string, endDate?: string, search?: string): Promise<{ rows: TransactionDTO[]; total: number }> => {
+    const { rows, total } = await TransactionRepository.findByUser(userId, pagination, categoryId, startDate, endDate, search);
     return { rows: rows.map(mapToTransactionDTO), total };
   },
 

@@ -42,9 +42,10 @@ export const TransactionController = {
       const categoryId = req.query.categoryId as string | undefined;
       const startDate = req.query.startDate as string | undefined;
       const endDate = req.query.endDate as string | undefined;
+      const search = req.query.search as string | undefined;
       const offset = (page - 1) * limit;
 
-      const { rows, total } = await TransactionService.findByUser(userId, { offset, limit }, categoryId, startDate, endDate);
+      const { rows, total } = await TransactionService.findByUser(userId, { offset, limit }, categoryId, startDate, endDate, search);
       
       res.status(200).json({
         data: rows,

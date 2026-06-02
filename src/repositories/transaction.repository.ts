@@ -8,13 +8,16 @@ export const TransactionRepository = {
     return transaction.dataValues as TransactionInterface;
   },
 
-  findByUser: async (userId: string, pagination?: { offset: number; limit: number }, categoryId?: string, startDate?: string, endDate?: string): Promise<{ rows: TransactionInterface[]; total: number }> => {
+  findByUser: async (userId: string, pagination?: { offset: number; limit: number }, categoryId?: string, startDate?: string, endDate?: string, search?: string): Promise<{ rows: TransactionInterface[]; total: number }> => {
     const { rows, count } = await Transaction.findAndCountAll({ 
       where: {
         userId,
         ...(categoryId && { categoryId }),
         ...(startDate && endDate && {
           date: { [Op.gte]: new Date(startDate), [Op.lte]: new Date(endDate) },
+        }),
+        ...(search && {
+          description: { [Op.iLike]: `%${search}%` },
         }),
       },
       include: [

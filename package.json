@@ -12,7 +12,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
-    "seed:admin": "tsx src/scripts/seed-admin.ts"
+    "seed:admin": "tsx src/scripts/seed-admin.ts",
+    "seed:transactions": "tsx src/scripts/seed-transactions.ts"
   },
   "keywords": [],
   "author": "",
