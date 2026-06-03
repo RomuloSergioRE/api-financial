@@ -4,6 +4,8 @@ import Category from './category.model.js';
 import AuditLog from './audit.model.js';
 import Tag from './tag.model.js';
 import TransactionTag from './transaction-tag.model.js';
+import Budget from './budget.model.js';
+import Goal from './goal.model.js';
 
 // User -> Transaction
 User.hasMany(Transaction, { foreignKey: 'userId', as: 'transactions' });
@@ -39,4 +41,20 @@ Tag.belongsToMany(Transaction, {
 TransactionTag.belongsTo(Tag, { foreignKey: 'tagId', as: 'tag' });
 TransactionTag.belongsTo(Transaction, { foreignKey: 'transactionId', as: 'transactionLink' });
 
-export { User, Transaction, Category, AuditLog, Tag, TransactionTag };
+// User -> Budget
+User.hasMany(Budget, { foreignKey: 'userId', as: 'budgets' });
+Budget.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// Category -> Budget
+Category.hasMany(Budget, { foreignKey: 'categoryId', as: 'budgets' });
+Budget.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
+
+// User -> Goal
+User.hasMany(Goal, { foreignKey: 'userId', as: 'goals' });
+Goal.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// Category -> Goal
+Category.hasMany(Goal, { foreignKey: 'categoryId', as: 'goals' });
+Goal.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
+
+export { User, Transaction, Category, AuditLog, Tag, TransactionTag, Budget, Goal };

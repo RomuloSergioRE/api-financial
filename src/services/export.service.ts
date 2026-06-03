@@ -232,13 +232,56 @@ export const ExportService = {
     }>;
     const totalPeriod = categoryRows.reduce((sum, r) => sum + Number(r.total), 0);
 
+    const monthlySeries = await Transaction.findAll({
+      where,
+      attributes: [
+        [fn('to_char', col('date'), 'YYYY-MM'), 'month'],
+        'type',
+        [fn('SUM', col('amount')), 'total'],
+      ],
+      group: [fn('to_char', col('date'), 'YYYY-MM'), 'type'],
+      order: [[fn('to_char', col('date'), 'YYYY-MM'), 'ASC']],
+      raw: true,
+    });
+
+    const seriesMap = new Map<string, { income: number; outcome: number }>();
+    for (const row of monthlySeries as unknown as Array<{ month: string; type: string; total: string }>) {
+      const prev = seriesMap.get(row.month) ?? { income: 0, outcome: 0 };
+      if (row.type === 'income') prev.income += Number(row.total);
+      else if (row.type === 'outcome') prev.outcome += Number(row.total);
+      seriesMap.set(row.month, prev);
+    }
+
+    const topCategoryRows = categoryRows
+      .sort((a, b) => Number(b.total) - Number(a.total))
+      .slice(0, 5);
+
     const rows: CsvRow[] = [
       { section: 'Summary', item: 'Total Income', amount: totalIncome.toString(), percentage: '', period: '' },
       { section: 'Summary', item: 'Total Outcome', amount: totalOutcome.toString(), percentage: '', period: '' },
       { section: 'Summary', item: 'Net Balance', amount: netBalance.toString(), percentage: '', period: '' },
       { section: '', item: '', amount: '', percentage: '', period: '' },
+      { section: 'Category Breakdown', item: 'Name', amount: 'Amount', percentage: 'Share', period: '' },
       ...categoryRows.map(r => ({
-        section: 'Category',
+        section: '',
+        item: r.category?.name ?? 'Uncategorized',
+        amount: Number(r.total).toString(),
+        percentage: totalPeriod > 0 ? ((Number(r.total) / totalPeriod) * 100).toFixed(2) : '0',
+        period: '',
+      })),
+      { section: '', item: '', amount: '', percentage: '', period: '' },
+      { section: 'Monthly Series', item: 'Month', amount: 'Income', percentage: 'Outcome', period: 'Net' },
+      ...Array.from(seriesMap.entries()).map(([month, vals]) => ({
+        section: '',
+        item: month,
+        amount: vals.income.toString(),
+        percentage: vals.outcome.toString(),
+        period: (vals.income - vals.outcome).toString(),
+      })),
+      { section: '', item: '', amount: '', percentage: '', period: '' },
+      { section: 'Top Categories', item: 'Name', amount: 'Amount', percentage: 'Share', period: '' },
+      ...topCategoryRows.map(r => ({
+        section: '',
         item: r.category?.name ?? 'Uncategorized',
         amount: Number(r.total).toString(),
         percentage: totalPeriod > 0 ? ((Number(r.total) / totalPeriod) * 100).toFixed(2) : '0',
@@ -581,6 +624,28 @@ export const ExportService = {
     }));
     const totalPeriod = categoryRows.reduce((s, r) => s + r.amount, 0);
 
+    const topCategoryRows = [...categoryRows].sort((a, b) => b.amount - a.amount).slice(0, 5);
+
+    const monthlySeries = await Transaction.findAll({
+      where,
+      attributes: [
+        [fn('to_char', col('date'), 'YYYY-MM'), 'month'],
+        'type',
+        [fn('SUM', col('amount')), 'total'],
+      ],
+      group: [fn('to_char', col('date'), 'YYYY-MM'), 'type'],
+      order: [[fn('to_char', col('date'), 'YYYY-MM'), 'ASC']],
+      raw: true,
+    });
+
+    const seriesMap = new Map<string, { income: number; outcome: number }>();
+    for (const row of monthlySeries as unknown as Array<{ month: string; type: string; total: string }>) {
+      const prev = seriesMap.get(row.month) ?? { income: 0, outcome: 0 };
+      if (row.type === 'income') prev.income += Number(row.total);
+      else if (row.type === 'outcome') prev.outcome += Number(row.total);
+      seriesMap.set(row.month, prev);
+    }
+
     const summaryColumns: TableColumn[] = [
       { key: 'item', header: 'Item', width: 200 },
       { key: 'amount', header: 'Amount', width: 120, align: 'right' },
@@ -602,6 +667,30 @@ export const ExportService = {
       percentage: totalPeriod > 0 ? `${((r.amount / totalPeriod) * 100).toFixed(2)}%` : '0%',
     }));
 
+    const seriesColumns: TableColumn[] = [
+      { key: 'month', header: 'Month', width: 90 },
+      { key: 'income', header: 'Income', width: 100, align: 'right' },
+      { key: 'outcome', header: 'Outcome', width: 100, align: 'right' },
+      { key: 'net', header: 'Net', width: 100, align: 'right' },
+    ];
+    const seriesRows = Array.from(seriesMap.entries()).map(([month, vals]) => ({
+      month,
+      income: formatCurrencyCents(vals.income),
+      outcome: formatCurrencyCents(vals.outcome),
+      net: formatCurrencyCents(vals.income - vals.outcome),
+    }));
+
+    const topColumns: TableColumn[] = [
+      { key: 'category', header: 'Category', width: 200 },
+      { key: 'amount', header: 'Amount', width: 100, align: 'right' },
+      { key: 'percentage', header: 'Share', width: 70, align: 'right' },
+    ];
+    const topRows = topCategoryRows.map(r => ({
+      category: r.category,
+      amount: formatCurrencyCents(r.amount),
+      percentage: totalPeriod > 0 ? `${((r.amount / totalPeriod) * 100).toFixed(2)}%` : '0%',
+    }));
+
     return buildPdf(doc => {
       addPdfHeader(doc, {
         title: 'Analytics Report',
@@ -614,6 +703,18 @@ export const ExportService = {
       doc.font('Helvetica-Bold').fontSize(12).fillColor('#111827').text('Category Breakdown');
       doc.moveDown(0.3);
       renderTable(doc, breakdownColumns, breakdownRows);
+      if (seriesRows.length > 0) {
+        doc.addPage();
+        addPdfHeader(doc, { title: 'Monthly Series', subtitle: '' });
+        doc.moveDown(0.3);
+        renderTable(doc, seriesColumns, seriesRows);
+      }
+      if (topRows.length > 0) {
+        doc.addPage();
+        addPdfHeader(doc, { title: 'Top Categories', subtitle: '' });
+        doc.moveDown(0.3);
+        renderTable(doc, topColumns, topRows);
+      }
     }, `analytics-${formatDateUtil(new Date())}.pdf`);
   },
 };

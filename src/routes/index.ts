@@ -5,6 +5,8 @@ import categoryRouter from './category.routes.js';
 import analyticsRoutes from './analytics.routes.js';
 import adminRoutes from './admin.routes.js';
 import tagRouter from './tag.routes.js';
+import budgetRouter from './budget.routes.js';
+import goalRouter from './goal.routes.js';
 
 const routes = Router();
 
@@ -14,5 +16,7 @@ routes.use('/categories', categoryRouter);
 routes.use('/analytics', analyticsRoutes);
 routes.use('/admin', adminRoutes);
 routes.use('/tags', tagRouter);
+routes.use('/budgets', budgetRouter);
+routes.use('/goals', goalRouter);
 
 export default routes;

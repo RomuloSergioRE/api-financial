@@ -2,6 +2,8 @@ import { Op } from 'sequelize';
 import { TransactionRepository } from '../repositories/transaction.repository.js';
 import type { TransactionCreateInput, TransactionUpdateInput, TransactionDTO, TransactionInterface } from '../types/transaction.types.js';
 import { BusinessError } from '../utils/errors.js';
+import { BudgetService } from './budget.service.js';
+import { GoalService } from './goal.service.js';
 import { Tag, TransactionTag } from '../models/index.js';
 
 const mapToTransactionDTO = (transaction: TransactionInterface): TransactionDTO => {
@@ -12,6 +14,10 @@ const mapToTransactionDTO = (transaction: TransactionInterface): TransactionDTO 
 export const TransactionService = {
   create: async (userId: string, data: TransactionCreateInput): Promise<TransactionDTO> => {
     const transaction = await TransactionRepository.create(userId, data);
+    if (data.type === 'outcome' && data.categoryId) {
+      await BudgetService.recalcSpent(userId, data.categoryId, data.date);
+      await GoalService.recalcCurrentAmount(userId, data.categoryId);
+    }
     return mapToTransactionDTO(transaction);
   },
 
@@ -36,17 +42,37 @@ export const TransactionService = {
   },
 
   update: async (id: string, userId: string, data: TransactionUpdateInput): Promise<TransactionDTO> => {
+    const old = await TransactionRepository.findByIdAndUser(id, userId);
     const updated = await TransactionRepository.update(id, userId, data);
     if (!updated) {
       throw new BusinessError('Transaction not found or unauthorized', 404);
+    }
+    if (old) {
+      await BudgetService.recalcSpent(userId, old.categoryId, old.date);
+      await GoalService.recalcCurrentAmount(userId, old.categoryId);
+    }
+    if (updated.type === 'outcome' && (data.categoryId || data.date)) {
+      await BudgetService.recalcSpent(
+        userId,
+        data.categoryId ?? old!.categoryId,
+        data.date ?? old!.date,
+      );
+    }
+    if (updated.type === 'outcome' && data.categoryId) {
+      await GoalService.recalcCurrentAmount(userId, data.categoryId);
     }
     return mapToTransactionDTO(updated);
   },
 
   delete: async (id: string, userId: string): Promise<void> => {
+    const old = await TransactionRepository.findByIdAndUser(id, userId);
     const success = await TransactionRepository.delete(id, userId);
     if (!success) {
       throw new BusinessError('Transaction not found or unauthorized', 404);
+    }
+    if (old) {
+      await BudgetService.recalcSpent(userId, old.categoryId, old.date);
+      await GoalService.recalcCurrentAmount(userId, old.categoryId);
     }
   },
 
