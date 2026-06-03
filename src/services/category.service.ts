@@ -8,31 +8,31 @@ const mapToCategoryDTO = (category: CategoryInterface): CategoryDTO => {
 };
 
 export const CategoryService = {
-    create: async (userId: string, data: CategoryCreateInput): Promise<CategoryDTO> => {
-        const category = await CategoryRepository.create(userId, data);
+    create: async (userId: string, data: CategoryCreateInput, orgId?: string | null): Promise<CategoryDTO> => {
+        const category = await CategoryRepository.create(userId, data, orgId);
         return mapToCategoryDTO(category);
     },
 
-    findByUser: async (userId: string, pagination?: { offset: number; limit: number }): Promise<{ rows: CategoryDTO[]; total: number }> => {
-        const { rows, total } = await CategoryRepository.findByUser(userId, pagination);
+    findByUser: async (userId: string, pagination?: { offset: number; limit: number }, orgId?: string): Promise<{ rows: CategoryDTO[]; total: number }> => {
+        const { rows, total } = await CategoryRepository.findByUser(userId, pagination, orgId);
         return { rows: rows.map(mapToCategoryDTO), total };
     },
 
-    findByIdAndUser: async (id: string, userId: string): Promise<CategoryDTO | null> => {
-        const category = await CategoryRepository.findByIdAndUser(id, userId);
+    findByIdAndUser: async (id: string, userId: string, orgId?: string): Promise<CategoryDTO | null> => {
+        const category = await CategoryRepository.findByIdAndUser(id, userId, orgId);
         return category ? mapToCategoryDTO(category) : null;
     },
 
-    update: async (id: string, userId: string, data: CategoryUpdateInput): Promise<CategoryDTO> => {
-        const updated = await CategoryRepository.update(id, userId, data);
+    update: async (id: string, userId: string, data: CategoryUpdateInput, orgId?: string): Promise<CategoryDTO> => {
+        const updated = await CategoryRepository.update(id, userId, data, orgId);
         if (!updated) {
             throw new BusinessError('Category not found, unauthorized, or it is a system default category', 404);
         }
         return mapToCategoryDTO(updated);
     },
 
-    delete: async (id: string, userId: string): Promise<void> => {
-        const success = await CategoryRepository.delete(id, userId);
+    delete: async (id: string, userId: string, orgId?: string): Promise<void> => {
+        const success = await CategoryRepository.delete(id, userId, orgId);
         if (!success) {
             throw new BusinessError('Category not found, unauthorized, or it is a system default category', 404);
         }

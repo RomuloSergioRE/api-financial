@@ -3,9 +3,14 @@ import { Transaction, Category, Tag } from '../models/index.js';
 import type { TransactionInterface, TransactionCreateInput, TransactionUpdateInput } from '../types/transaction.types.js';
 import type { TagDTO } from '../types/tag.types.js';
 
+interface OrgContext {
+  memberIds: string[];
+  orgId: string;
+}
+
 export const TransactionRepository = {
-  create: async (userId: string, data: TransactionCreateInput): Promise<TransactionInterface> => {
-    const transaction = await Transaction.create({ ...data, userId });
+  create: async (userId: string, data: TransactionCreateInput, orgId?: string | null): Promise<TransactionInterface> => {
+    const transaction = await Transaction.create({ ...data, userId, organizationId: orgId || null });
     return transaction.dataValues as TransactionInterface;
   },
 
@@ -16,9 +21,18 @@ export const TransactionRepository = {
     startDate?: string,
     endDate?: string,
     search?: string,
-    tagIds?: string[]
+    tagIds?: string[],
+    orgContext?: OrgContext
   ): Promise<{ rows: TransactionInterface[]; total: number }> => {
-    const where: Record<string, unknown> = { userId };
+    const where: Record<string, unknown> = {};
+
+    if (orgContext) {
+      where.userId = { [Op.in]: orgContext.memberIds };
+      where.organizationId = orgContext.orgId;
+    } else {
+      where.userId = userId;
+      where.organizationId = null;
+    }
 
     if (categoryId) where.categoryId = categoryId;
     if (startDate && endDate) {
@@ -84,9 +98,18 @@ export const TransactionRepository = {
     return { rows: mapped, total: count };
   },
 
-  findByIdAndUser: async (id: string, userId: string): Promise<TransactionInterface | null> => {
+  findByIdAndUser: async (id: string, userId: string, orgContext?: OrgContext): Promise<TransactionInterface | null> => {
+    const where: Record<string, unknown> = { id };
+
+    if (orgContext) {
+      where.userId = { [Op.in]: orgContext.memberIds };
+      where.organizationId = orgContext.orgId;
+    } else {
+      where.userId = userId;
+    }
+
     const transaction = await Transaction.findOne({
-      where: { id, userId },
+      where,
       include: [
         {
           model: Category,
@@ -114,17 +137,35 @@ export const TransactionRepository = {
     return data;
   },
 
-  update: async (id: string, userId: string, data: TransactionUpdateInput): Promise<TransactionInterface | null> => {
+  update: async (id: string, userId: string, data: TransactionUpdateInput, orgContext?: OrgContext): Promise<TransactionInterface | null> => {
+    const where: Record<string, unknown> = { id };
+
+    if (orgContext) {
+      where.userId = { [Op.in]: orgContext.memberIds };
+      where.organizationId = orgContext.orgId;
+    } else {
+      where.userId = userId;
+    }
+
     const [affectedCount, affectedRows] = await Transaction.update(data, {
-      where: { id, userId },
+      where,
       returning: true,
     });
     if (affectedCount === 0 || !affectedRows[0]) return null;
     return affectedRows[0].dataValues as TransactionInterface;
   },
 
-  delete: async (id: string, userId: string): Promise<boolean> => {
-    const deletedRows = await Transaction.destroy({ where: { id, userId } });
+  delete: async (id: string, userId: string, orgContext?: OrgContext): Promise<boolean> => {
+    const where: Record<string, unknown> = { id };
+
+    if (orgContext) {
+      where.userId = { [Op.in]: orgContext.memberIds };
+      where.organizationId = orgContext.orgId;
+    } else {
+      where.userId = userId;
+    }
+
+    const deletedRows = await Transaction.destroy({ where });
     return deletedRows > 0;
   },
 };

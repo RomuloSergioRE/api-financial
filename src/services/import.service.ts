@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { z } from 'zod';
+import sequelize from '../config/db.js';
 import { Transaction, Category, Tag, TransactionTag } from '../models/index.js';
 import { parseCSV } from '../utils/csv.util.js';
 
@@ -61,7 +62,7 @@ async function resolveTagIds(userId: string, tagsStr: string): Promise<string[]>
 }
 
 export const ImportService = {
-  async importTransactions(userId: string, buffer: Buffer): Promise<ImportResult> {
+  async importTransactions(userId: string, buffer: Buffer, orgId?: string): Promise<ImportResult> {
     const lines = parseCSV(buffer);
     const errors: ImportResult['errors'] = [];
     const validRows: Array<{
@@ -72,6 +73,7 @@ export const ImportService = {
         amount: number;
         type: 'income' | 'outcome';
         date: Date;
+        organizationId?: string | null;
       };
       tagIds: string[];
     }> = [];
@@ -113,32 +115,35 @@ export const ImportService = {
           amount: parsed.data.amount,
           type: parsed.data.type,
           date: new Date(parsed.data.date),
+          organizationId: orgId || null,
         },
         tagIds,
       });
     }
 
     if (validRows.length > 0) {
-      const created = await Transaction.bulkCreate(validRows.map(r => r.data), { returning: true });
+      await sequelize.transaction(async (t) => {
+        const created = await Transaction.bulkCreate(validRows.map(r => r.data), { returning: true, transaction: t });
 
-      const tagLinks: Array<{ transactionId: string; tagId: string }> = [];
-      for (let j = 0; j < created.length; j++) {
-        const row = validRows[j]!;
-        const transactionId = created[j]!.id;
-        for (const tagId of row.tagIds) {
-          tagLinks.push({ transactionId, tagId });
+        const tagLinks: Array<{ transactionId: string; tagId: string }> = [];
+        for (let j = 0; j < created.length; j++) {
+          const row = validRows[j]!;
+          const transactionId = created[j]!.id;
+          for (const tagId of row.tagIds) {
+            tagLinks.push({ transactionId, tagId });
+          }
         }
-      }
 
-      if (tagLinks.length > 0) {
-        await TransactionTag.bulkCreate(tagLinks);
-      }
+        if (tagLinks.length > 0) {
+          await TransactionTag.bulkCreate(tagLinks, { transaction: t });
+        }
+      });
     }
 
     return { imported: validRows.length, errors };
   },
 
-  async importCategories(userId: string, buffer: Buffer): Promise<ImportResult> {
+  async importCategories(userId: string, buffer: Buffer, orgId?: string): Promise<ImportResult> {
     const lines = parseCSV(buffer);
     const errors: ImportResult['errors'] = [];
     const validCategories: Array<{
@@ -146,6 +151,7 @@ export const ImportService = {
       icon: string | null;
       color: string | null;
       userId: string;
+      organizationId?: string | null;
     }> = [];
 
     for (let i = 0; i < lines.length; i++) {
@@ -176,11 +182,14 @@ export const ImportService = {
         icon: parsed.data.icon || null,
         color: parsed.data.color || null,
         userId,
+        organizationId: orgId || null,
       });
     }
 
     if (validCategories.length > 0) {
-      await Category.bulkCreate(validCategories);
+      await sequelize.transaction(async (t) => {
+        await Category.bulkCreate(validCategories, { transaction: t });
+      });
     }
 
     return { imported: validCategories.length, errors };
@@ -247,20 +256,22 @@ export const ImportService = {
     }
 
     if (validRows.length > 0) {
-      const created = await Transaction.bulkCreate(validRows.map(r => r.data), { returning: true });
+      await sequelize.transaction(async (t) => {
+        const created = await Transaction.bulkCreate(validRows.map(r => r.data), { returning: true, transaction: t });
 
-      const tagLinks: Array<{ transactionId: string; tagId: string }> = [];
-      for (let j = 0; j < created.length; j++) {
-        const row = validRows[j]!;
-        const transactionId = created[j]!.id;
-        for (const tagId of row.tagIds) {
-          tagLinks.push({ transactionId, tagId });
+        const tagLinks: Array<{ transactionId: string; tagId: string }> = [];
+        for (let j = 0; j < created.length; j++) {
+          const row = validRows[j]!;
+          const transactionId = created[j]!.id;
+          for (const tagId of row.tagIds) {
+            tagLinks.push({ transactionId, tagId });
+          }
         }
-      }
 
-      if (tagLinks.length > 0) {
-        await TransactionTag.bulkCreate(tagLinks);
-      }
+        if (tagLinks.length > 0) {
+          await TransactionTag.bulkCreate(tagLinks, { transaction: t });
+        }
+      });
     }
 
     return { imported: validRows.length, errors };

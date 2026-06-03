@@ -11,6 +11,8 @@ export interface TransactionInterface {
   amount: number; 
   type: Type;
   date: Date;
+  recurringRuleId?: string | null;
+  organizationId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
@@ -19,4 +21,4 @@ export interface TransactionInterface {
 
 export type TransactionCreateInput = Omit<TransactionInterface, Create>;
 export type TransactionUpdateInput = Partial<TransactionCreateInput>;
-export type TransactionDTO = Omit<TransactionInterface, 'deletedAt'>;
+export type TransactionDTO = Omit<TransactionInterface, 'deletedAt'> & { isRecurring: boolean };

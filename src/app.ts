@@ -7,6 +7,7 @@ import swaggerUi from 'swagger-ui-express';
 import { getSwaggerDocument } from './config/swagger.js'; 
 import routes from './routes/index.js'; 
 import { requestIdMiddleware } from './middlewares/requestId.middleware.js';
+import { metricsMiddleware } from './middlewares/metrics.middleware.js';
 import { logger, getRequestId } from './utils/logger.js';
 import sequelize from './config/db.js';
 
@@ -19,7 +20,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:"],
     },
   },
@@ -34,7 +35,12 @@ app.use(cors({
     if (!origin || allowedOrigins.some(o => {
       if (o.endsWith(':*')) {
         const base = o.slice(0, -2);
-        return origin.startsWith(base);
+        try {
+          const url = new URL(origin);
+          return url.hostname === 'localhost' && (url.port !== '' || origin === base);
+        } catch {
+          return false;
+        }
       }
       return o === origin;
     })) {
@@ -56,9 +62,13 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+app.use(metricsMiddleware);
+
 const renderUrl = process.env.RENDER_EXTERNAL_URL || process.env.SWAGGER_SERVER_URL;
 const swaggerDoc = getSwaggerDocument(renderUrl);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+}
 
 app.get('/health', async (req: Request, res: Response) => {
   try {

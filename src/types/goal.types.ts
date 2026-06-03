@@ -6,6 +6,7 @@ export interface GoalInterface {
   targetAmount: number;
   currentAmount: number;
   deadline: string | null;
+  organizationId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;

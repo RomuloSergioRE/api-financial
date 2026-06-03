@@ -5,6 +5,7 @@ export interface TagInterface {
   userId: string;
   name: string;
   color: string | null;
+  organizationId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;

@@ -1,9 +1,12 @@
 import { AdminRepository } from '../repositories/admin.repository.js';
 import { AnalyticsService } from './analytics.service.js';
 import { AuditService } from './audit.service.js';
+import { getMetrics } from '../middlewares/metrics.middleware.js';
+import sequelize from '../config/db.js';
 import type { UserInterface, Role, Status } from '../types/user.types.js';
 import type { CategoryInterface, CategoryCreateInput, CategoryUpdateInput } from '../types/category.types.js';
 import type { CategoryShareDTO } from '../types/analytics.types.js';
+import type { AuditLogInterface } from '../models/audit.model.js';
 import { BusinessError } from '../utils/errors.js';
 
 type UserDTO = Omit<UserInterface, 'password' | 'tokenVersion' | 'deletedAt'>;
@@ -110,5 +113,53 @@ export const AdminService = {
     const categories = await AnalyticsService.getCategoryDistribution(userId, {});
 
     return { balance, categories };
+  },
+
+  listAuditLogs: async (
+    filters: { adminId?: string; action?: string; targetType?: string; startDate?: string; endDate?: string },
+    pagination: { offset: number; limit: number }
+  ): Promise<{ rows: AuditLogInterface[]; total: number }> => {
+    return AdminRepository.listAuditLogs(filters, pagination);
+  },
+
+  listGlobalCategories: async (): Promise<CategoryInterface[]> => {
+    return AdminRepository.getGlobalCategories();
+  },
+
+  getUserGrowth: async (startDate: string, endDate: string, granularity: 'day' | 'month'): Promise<Array<{ period: string; newUsers: number }>> => {
+    return AdminRepository.getUserGrowth(startDate, endDate, granularity);
+  },
+
+  getPerformance: async (): Promise<{
+    totalUsers: number;
+    activeUsers: number;
+    totalTransactions: number;
+    totalAuditLogs: number;
+    totalCategories: number;
+    totalRequests: number;
+    totalErrors: number;
+    errorRate: number;
+    dbStatus: string;
+  }> => {
+    const [overview, auditCount, categoryCount, dbStatus] = await Promise.all([
+      AdminRepository.getOverview(),
+      AdminRepository.countAuditLogs(),
+      AdminRepository.getGlobalCategories().then(c => c.length),
+      sequelize.authenticate().then(() => 'healthy' as const).catch(() => 'unhealthy' as const),
+    ]);
+
+    const { requestCount, errorCount } = getMetrics();
+
+    return {
+      totalUsers: overview.totalUsers,
+      activeUsers: overview.activeUsers,
+      totalTransactions: overview.totalTransactions,
+      totalAuditLogs: auditCount,
+      totalCategories: categoryCount,
+      totalRequests: requestCount,
+      totalErrors: errorCount,
+      errorRate: requestCount > 0 ? parseFloat((errorCount / requestCount * 100).toFixed(2)) : 0,
+      dbStatus,
+    };
   },
 };

@@ -10,6 +10,7 @@ class Category extends Model<Omit<CategoryInterface, SequelizeTimestamps>, Categ
   declare icon: string | null;
   declare color: string | null;
   declare userId: string | null;
+  declare organizationId: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
   declare readonly deletedAt: Date | null;
@@ -45,6 +46,11 @@ Category.init(
       onDelete: 'CASCADE',
       field: 'userId',
     },
+    organizationId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'organization_id',
+    },
   },
   {
     sequelize,
@@ -64,6 +70,10 @@ Category.init(
       {
         fields: ['name'],
         name: 'categories_name_idx',
+      },
+      {
+        fields: ['organization_id'],
+        name: 'categories_org_id_idx',
       },
     ],
   }

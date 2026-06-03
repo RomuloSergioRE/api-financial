@@ -23,7 +23,10 @@ export type UserCreation = Omit<UserInterface, Creation> & {
     tokenVersion?: number;
 }
 
-export type UserUpdateInput = Partial<Omit<UserInterface, 'id' | 'password' | SequelizeTimestamps>> & {
+export type UserProfileUpdate = Partial<Omit<UserInterface, 'id' | 'password' | 'tokenVersion' | SequelizeTimestamps>>;
+
+export type UserUpdateInput = UserProfileUpdate & {
     status?: Status;
     password?: string;
+    tokenVersion?: number;
 };

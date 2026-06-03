@@ -10,6 +10,7 @@ class Budget extends Model implements BudgetInterface {
   declare year: number;
   declare limit: number;
   declare spent: number;
+  declare organizationId: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
   declare readonly deletedAt: Date | null;
@@ -49,6 +50,11 @@ Budget.init(
       allowNull: false,
       defaultValue: 0,
     },
+    organizationId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'organization_id',
+    },
   },
   {
     sequelize,
@@ -57,8 +63,8 @@ Budget.init(
     timestamps: true,
     paranoid: true,
     indexes: [
-      { fields: ['user_id', 'year', 'month'], name: 'budgets_user_year_month_idx' },
-      { fields: ['user_id', 'category_id', 'deleted_at'], name: 'budgets_user_category_deleted_at_idx' },
+      { fields: ['user_id', 'category_id', 'month', 'year', 'organization_id'], unique: true, name: 'budgets_user_cat_month_year_org_uniq' },
+      { fields: ['organization_id'], name: 'budgets_org_id_idx' },
     ],
   }
 );

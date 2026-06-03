@@ -10,6 +10,7 @@ class Goal extends Model implements GoalInterface {
   declare targetAmount: number;
   declare currentAmount: number;
   declare deadline: string | null;
+  declare organizationId: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
   declare readonly deletedAt: Date | null;
@@ -51,6 +52,11 @@ Goal.init(
       type: DataTypes.DATEONLY,
       allowNull: true,
     },
+    organizationId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'organization_id',
+    },
   },
   {
     sequelize,
@@ -61,6 +67,7 @@ Goal.init(
     indexes: [
       { fields: ['user_id'], name: 'goals_user_id_idx' },
       { fields: ['category_id'], name: 'goals_category_id_idx' },
+      { fields: ['organization_id'], name: 'goals_org_id_idx' },
     ],
   }
 );

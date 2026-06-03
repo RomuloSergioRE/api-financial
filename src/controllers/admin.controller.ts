@@ -7,6 +7,8 @@ import {
   createGlobalCategorySchema,
   updateGlobalCategorySchema,
   listUsersQuerySchema,
+  auditLogsQuerySchema,
+  userGrowthQuerySchema,
 } from '../validators/admin.validator.js';
 import { handleControllerError } from '../utils/errors.js';
 import { ExportService } from '../services/export.service.js';
@@ -198,6 +200,54 @@ export const AdminController = {
       }
 
       res.status(result.errors.length > 0 ? 207 : 200).json(result);
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  listGlobalCategories: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const categories = await AdminService.listGlobalCategories();
+      res.status(200).json(categories);
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  listAuditLogs: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { page, limit, adminId, action, targetType, startDate, endDate } = auditLogsQuerySchema.parse(req.query);
+      const offset = (page - 1) * limit;
+      const filters: { adminId?: string; action?: string; targetType?: string; startDate?: string; endDate?: string } = {};
+      if (adminId) filters.adminId = adminId;
+      if (action) filters.action = action;
+      if (targetType) filters.targetType = targetType;
+      if (startDate) filters.startDate = startDate;
+      if (endDate) filters.endDate = endDate;
+      const { rows, total } = await AdminService.listAuditLogs(filters, { offset, limit });
+      res.status(200).json({
+        data: rows,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      });
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  getUserGrowth: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { startDate, endDate, granularity } = userGrowthQuerySchema.parse(req.query);
+      const data = await AdminService.getUserGrowth(startDate, endDate, granularity);
+      res.status(200).json(data);
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  getPerformance: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const data = await AdminService.getPerformance();
+      res.status(200).json(data);
     } catch (error) {
       handleControllerError(res, error);
     }

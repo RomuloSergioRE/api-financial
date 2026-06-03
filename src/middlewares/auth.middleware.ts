@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { JwtUtil } from '../utils/jwt.util.js';
 import { UserRepository } from '../repositories/user.repository.js';
+import { logger } from '../utils/logger.js';
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const authHeader = req.headers.authorization;
@@ -39,10 +40,12 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     req.user = {
       id: user.id,
       role: user.role,
+      ...(decoded.organizationId ? { organizationId: decoded.organizationId } : {}),
     };
 
     next();
   } catch (error) {
+    logger.error('JWT verification failed', error);
     res.status(401).json({ error: 'Invalid or expired token.' });
   }
 };

@@ -12,6 +12,8 @@ class Transaction extends Model implements TransactionInterface {
   declare amount: number;
   declare type: Type;
   declare date: Date;
+  declare recurringRuleId: string | null;
+  declare organizationId: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
   declare readonly deletedAt: Date | null;
@@ -63,6 +65,16 @@ Transaction.init(
       allowNull: false,
       defaultValue: DataTypes.NOW,
     },
+    recurringRuleId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'recurring_rule_id',
+    },
+    organizationId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'organization_id',
+    },
   },
   {
     sequelize,
@@ -94,6 +106,14 @@ Transaction.init(
       {
         fields: ['userId', 'type'],
         name: 'transactions_user_id_type_idx'
+      },
+      {
+        fields: ['recurring_rule_id'],
+        name: 'transactions_recurring_rule_id_idx'
+      },
+      {
+        fields: ['organization_id'],
+        name: 'transactions_org_id_idx'
       }
     ]
   }

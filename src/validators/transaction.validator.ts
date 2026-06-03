@@ -15,3 +15,13 @@ export const updateTransactionSchema = z.object({
   type: z.enum(['income', 'outcome']).optional(),
   date: z.string().datetime().optional(),
 });
+
+export const transactionQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  categoryId: z.string().uuid().optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  search: z.string().max(255).optional(),
+  tags: z.string().max(1000).optional(),
+});

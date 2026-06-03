@@ -6,6 +6,7 @@ export interface CategoryInterface {
   icon?: string | null;
   color?: string | null;
   userId?: string | null;
+  organizationId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;

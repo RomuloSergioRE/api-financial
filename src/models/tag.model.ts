@@ -7,6 +7,7 @@ class Tag extends Model implements TagInterface {
   declare userId: string;
   declare name: string;
   declare color: string | null;
+  declare organizationId: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
   declare readonly deletedAt: Date | null;
@@ -32,6 +33,11 @@ Tag.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    organizationId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      field: 'organization_id',
+    },
   },
   {
     sequelize,
@@ -42,6 +48,7 @@ Tag.init(
     indexes: [
       { fields: ['user_id'], name: 'tags_user_id_idx' },
       { fields: ['user_id', 'deleted_at'], name: 'tags_user_id_deleted_at_idx' },
+      { fields: ['organization_id'], name: 'tags_org_id_idx' },
     ],
   }
 );

@@ -14,7 +14,7 @@ export const TagController = {
       const tag = await TagService.create(req.user.id, {
         name: validated.name,
         color: validated.color ?? null,
-      });
+      }, req.user.organizationId);
       res.status(201).json(tag);
     } catch (error) {
       handleControllerError(res, error);
@@ -27,7 +27,7 @@ export const TagController = {
         res.status(401).json({ error: 'Unauthorized: User missing' });
         return;
       }
-      const tags = await TagService.findByUser(req.user.id);
+      const tags = await TagService.findByUser(req.user.id, req.user.organizationId);
       res.status(200).json(tags);
     } catch (error) {
       handleControllerError(res, error);
@@ -41,7 +41,7 @@ export const TagController = {
         return;
       }
       const id = req.params.id as string;
-      const tag = await TagService.findByIdAndUser(id, req.user.id);
+      const tag = await TagService.findByIdAndUser(id, req.user.id, req.user.organizationId);
       if (!tag) {
         res.status(404).json({ error: 'Tag not found' });
         return;
@@ -63,7 +63,7 @@ export const TagController = {
       const updateData: { name?: string; color?: string | null } = {};
       if (validated.name) updateData.name = validated.name;
       if (validated.color !== undefined) updateData.color = validated.color ?? null;
-      const updated = await TagService.update(id, req.user.id, updateData);
+      const updated = await TagService.update(id, req.user.id, updateData, req.user.organizationId);
       res.status(200).json(updated);
     } catch (error) {
       handleControllerError(res, error);
@@ -77,7 +77,7 @@ export const TagController = {
         return;
       }
       const id = req.params.id as string;
-      await TagService.delete(id, req.user.id);
+      await TagService.delete(id, req.user.id, req.user.organizationId);
       res.status(204).send();
     } catch (error) {
       handleControllerError(res, error);

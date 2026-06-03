@@ -7,6 +7,8 @@ import adminRoutes from './admin.routes.js';
 import tagRouter from './tag.routes.js';
 import budgetRouter from './budget.routes.js';
 import goalRouter from './goal.routes.js';
+import recurringRouter from './recurring-rule.routes.js';
+import organizationRouter from './organization.routes.js';
 
 const routes = Router();
 
@@ -18,5 +20,7 @@ routes.use('/admin', adminRoutes);
 routes.use('/tags', tagRouter);
 routes.use('/budgets', budgetRouter);
 routes.use('/goals', goalRouter);
+routes.use('/recurring', recurringRouter);
+routes.use('/organizations', organizationRouter);
 
 export default routes;

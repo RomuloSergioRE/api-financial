@@ -84,9 +84,17 @@ async function fetchTagsForTransactions(transactionIds: string[]): Promise<Map<s
 export const ExportService = {
   async exportTransactionsCSV(
     userId: string,
-    filters: TransactionExportFilters = {}
+    filters: TransactionExportFilters = {},
+    orgId?: string
   ): Promise<{ content: string; filename: string }> {
-    const where: Record<string, unknown> = { userId };
+    const where: Record<string, unknown> = {};
+
+    if (orgId) {
+      where.organizationId = orgId;
+    } else {
+      where.userId = userId;
+      where.organizationId = null;
+    }
     if (filters.categoryId) where.categoryId = filters.categoryId;
     if (filters.search) where.description = { [Op.iLike]: `%${filters.search}%` };
     const dateRange = buildDateRange(filters);
@@ -147,10 +155,20 @@ export const ExportService = {
   },
 
   async exportCategoriesCSV(
-    userId: string
+    userId: string,
+    orgId?: string
   ): Promise<{ content: string; filename: string }> {
-    const categories = await Category.findAll({
-      where: { [Op.or]: [{ userId }, { userId: null }] },
+    const orConditions: Array<Record<string, unknown>> = [];
+    if (orgId) {
+      orConditions.push({ organizationId: orgId });
+      orConditions.push({ userId: null });
+    } else {
+      orConditions.push({ userId });
+      orConditions.push({ userId: null });
+    }
+    const where: Record<string, unknown> = { [Op.or]: orConditions };
+    if (!orgId) where.organizationId = null;
+    const categories = await Category.findAll({ where,
       order: [['name', 'ASC']],
     });
 
@@ -478,9 +496,17 @@ export const ExportService = {
 
   async exportTransactionsPDF(
     userId: string,
-    filters: TransactionExportFilters = {}
+    filters: TransactionExportFilters = {},
+    orgId?: string
   ): Promise<PdfResult> {
-    const where: Record<string, unknown> = { userId };
+    const where: Record<string, unknown> = {};
+
+    if (orgId) {
+      where.organizationId = orgId;
+    } else {
+      where.userId = userId;
+      where.organizationId = null;
+    }
     if (filters.categoryId) where.categoryId = filters.categoryId;
     if (filters.search) where.description = { [Op.iLike]: `%${filters.search}%` };
     const dateRange = buildDateRange(filters);
@@ -550,9 +576,18 @@ export const ExportService = {
     }, `transactions-${formatDateUtil(new Date())}.pdf`);
   },
 
-  async exportCategoriesPDF(userId: string): Promise<PdfResult> {
-    const categories = await Category.findAll({
-      where: { [Op.or]: [{ userId }, { userId: null }] },
+  async exportCategoriesPDF(userId: string, orgId?: string): Promise<PdfResult> {
+    const orConditions: Array<Record<string, unknown>> = [];
+    if (orgId) {
+      orConditions.push({ organizationId: orgId });
+      orConditions.push({ userId: null });
+    } else {
+      orConditions.push({ userId });
+      orConditions.push({ userId: null });
+    }
+    const where: Record<string, unknown> = { [Op.or]: orConditions };
+    if (!orgId) where.organizationId = null;
+    const categories = await Category.findAll({ where,
       order: [['name', 'ASC']],
     });
 

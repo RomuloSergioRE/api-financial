@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { migrator } from './config/migration.js';
 import { logger } from './utils/logger.js';
 import './models/index.js';
+import { startRecurringScheduler } from './services/recurring-scheduler.js';
 
 dotenv.config();
 
@@ -40,6 +41,8 @@ async function startServer(): Promise<void> {
     } else {
       logger.info('No pending migrations to execute.');
     }
+
+    startRecurringScheduler();
 
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);

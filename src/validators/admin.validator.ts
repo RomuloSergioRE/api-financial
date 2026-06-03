@@ -27,3 +27,19 @@ export const listUsersQuerySchema = z.object({
   status: z.enum(['active', 'inactive', 'suspended']).optional(),
   search: z.string().max(255).optional(),
 });
+
+export const auditLogsQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  adminId: z.string().uuid().optional(),
+  action: z.string().max(255).optional(),
+  targetType: z.string().max(255).optional(),
+  startDate: z.string().datetime({ offset: true }).optional(),
+  endDate: z.string().datetime({ offset: true }).optional(),
+});
+
+export const userGrowthQuerySchema = z.object({
+  startDate: z.string().datetime({ offset: true }),
+  endDate: z.string().datetime({ offset: true }),
+  granularity: z.enum(['day', 'month']).default('month'),
+});

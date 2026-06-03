@@ -6,6 +6,7 @@ export interface BudgetInterface {
   year: number;
   limit: number;
   spent: number;
+  organizationId?: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;

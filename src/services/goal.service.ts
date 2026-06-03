@@ -1,10 +1,17 @@
 import { Op, fn, col } from 'sequelize';
+import sequelize from '../config/db.js';
 import { GoalRepository } from '../repositories/goal.repository.js';
 import Goal from '../models/goal.model.js';
 import Transaction from '../models/transaction.model.js';
 import Category from '../models/category.model.js';
+import { resolveOrgMemberIds } from '../utils/org-resolver.js';
 import type { GoalInterface, GoalCreateInput, GoalUpdateInput, GoalDTO } from '../types/goal.types.js';
 import { BusinessError } from '../utils/errors.js';
+
+interface OrgContext {
+  memberIds: string[];
+  orgId: string;
+}
 
 const mapToGoalDTO = (goal: GoalInterface, categoryName = 'Unknown'): GoalDTO => {
   const progress = goal.targetAmount > 0
@@ -27,74 +34,81 @@ const mapToGoalDTO = (goal: GoalInterface, categoryName = 'Unknown'): GoalDTO =>
 };
 
 export const GoalService = {
-  create: async (userId: string, data: GoalCreateInput): Promise<GoalDTO> => {
-    const goal = await GoalRepository.create(userId, data);
+  create: async (userId: string, data: GoalCreateInput, orgId?: string | null): Promise<GoalDTO> => {
+    const goal = await GoalRepository.create(userId, data, orgId);
     return mapToGoalDTO(goal);
   },
 
-  findByUser: async (userId: string): Promise<GoalDTO[]> => {
-    const goals = await GoalRepository.findByUser(userId);
-    const goalDTOs: GoalDTO[] = [];
-    for (const g of goals) {
-      let categoryName: string | undefined;
-      if (g.categoryId) {
-        const category = await Category.findByPk(g.categoryId);
-        categoryName = category?.name;
-      }
-      goalDTOs.push(mapToGoalDTO(g, categoryName ?? 'Unknown'));
-    }
-    return goalDTOs;
+  findByUser: async (userId: string, orgId?: string): Promise<GoalDTO[]> => {
+    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const goals = await GoalRepository.findByUser(userId, orgContext);
+    return goals.map(g => mapToGoalDTO(g, (g as unknown as { category?: { name: string } }).category?.name ?? 'Unknown'));
   },
 
-  findByIdAndUser: async (id: string, userId: string): Promise<GoalDTO | null> => {
-    const goal = await GoalRepository.findByIdAndUser(id, userId);
+  findByIdAndUser: async (id: string, userId: string, orgId?: string): Promise<GoalDTO | null> => {
+    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const goal = await GoalRepository.findByIdAndUser(id, userId, orgContext);
     if (!goal) return null;
-    let categoryName = 'Unknown';
-    if (goal.categoryId) {
-      const category = await Category.findByPk(goal.categoryId);
-      categoryName = category?.name ?? 'Unknown';
-    }
-    return mapToGoalDTO(goal, categoryName);
+    return mapToGoalDTO(goal, (goal as unknown as { category?: { name: string } }).category?.name ?? 'Unknown');
   },
 
-  update: async (id: string, userId: string, data: GoalUpdateInput): Promise<GoalDTO> => {
-    const updated = await GoalRepository.update(id, userId, data);
+  update: async (id: string, userId: string, data: GoalUpdateInput, orgId?: string): Promise<GoalDTO> => {
+    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const updated = await GoalRepository.update(id, userId, data, orgContext);
     if (!updated) {
       throw new BusinessError('Goal not found', 404);
     }
-    return mapToGoalDTO(updated);
+    return mapToGoalDTO(updated, (updated as unknown as { category?: { name: string } }).category?.name ?? 'Unknown');
   },
 
-  delete: async (id: string, userId: string): Promise<void> => {
-    const success = await GoalRepository.delete(id, userId);
+  delete: async (id: string, userId: string, orgId?: string): Promise<void> => {
+    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const success = await GoalRepository.delete(id, userId, orgContext);
     if (!success) {
       throw new BusinessError('Goal not found', 404);
     }
   },
 
-  recalcCurrentAmount: async (userId: string, categoryId: string): Promise<void> => {
-    const goals = await Goal.findAll({ where: { userId, categoryId } });
-
-    for (const goal of goals) {
-      const where: Record<string, unknown> = {
-        userId,
-        categoryId,
-        type: 'outcome',
-      };
-
-      if (goal.deadline) {
-        where.date = { [Op.lte]: goal.deadline };
-      }
-
-      const result = await Transaction.findAll({
-        where,
-        attributes: [[fn('COALESCE', fn('SUM', col('amount')), 0), 'total']],
-        raw: true,
-      });
-
-      const total = Number((result[0] as { total: string } | undefined)?.total ?? 0);
-
-      await Goal.update({ currentAmount: total }, { where: { id: goal.id } });
+  recalcCurrentAmount: async (userId: string, categoryId: string, orgContext?: OrgContext): Promise<void> => {
+    const goalWhere: Record<string, unknown> = { categoryId };
+    if (orgContext) {
+      goalWhere.userId = { [Op.in]: orgContext.memberIds };
+      goalWhere.organizationId = orgContext.orgId;
+    } else {
+      goalWhere.userId = userId;
     }
+
+    const goals = await Goal.findAll({ where: goalWhere });
+
+    await sequelize.transaction(async (t) => {
+      for (const goal of goals) {
+        const txWhere: Record<string, unknown> = {
+          categoryId,
+          type: 'outcome',
+        };
+
+        if (orgContext) {
+          txWhere.userId = { [Op.in]: orgContext.memberIds };
+          txWhere.organizationId = orgContext.orgId;
+        } else {
+          txWhere.userId = userId;
+        }
+
+        if (goal.deadline) {
+          txWhere.date = { [Op.lte]: goal.deadline };
+        }
+
+        const result = await Transaction.findAll({
+          where: txWhere,
+          attributes: [[fn('COALESCE', fn('SUM', col('amount')), 0), 'total']],
+          raw: true,
+          transaction: t,
+        });
+
+        const total = Number((result[0] as { total: string } | undefined)?.total ?? 0);
+
+        await Goal.update({ currentAmount: total }, { where: { id: goal.id }, transaction: t });
+      }
+    });
   },
 };

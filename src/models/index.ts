@@ -6,6 +6,9 @@ import Tag from './tag.model.js';
 import TransactionTag from './transaction-tag.model.js';
 import Budget from './budget.model.js';
 import Goal from './goal.model.js';
+import RecurringRule from './recurring-rule.model.js';
+import Organization from './organization.model.js';
+import OrganizationMember from './organization-member.model.js';
 
 // User -> Transaction
 User.hasMany(Transaction, { foreignKey: 'userId', as: 'transactions' });
@@ -57,4 +60,36 @@ Goal.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 Category.hasMany(Goal, { foreignKey: 'categoryId', as: 'goals' });
 Goal.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
 
-export { User, Transaction, Category, AuditLog, Tag, TransactionTag, Budget, Goal };
+// User -> RecurringRule
+User.hasMany(RecurringRule, { foreignKey: 'userId', as: 'recurringRules' });
+RecurringRule.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+// Category -> RecurringRule
+Category.hasMany(RecurringRule, { foreignKey: 'categoryId', as: 'recurringRules' });
+RecurringRule.belongsTo(Category, { foreignKey: 'categoryId', as: 'category' });
+
+// Transaction -> RecurringRule
+Transaction.belongsTo(RecurringRule, { foreignKey: 'recurringRuleId', as: 'recurringRule' });
+RecurringRule.hasMany(Transaction, { foreignKey: 'recurringRuleId', as: 'transactions' });
+
+// Organization -> Members
+Organization.hasMany(OrganizationMember, { foreignKey: 'organizationId', as: 'members' });
+OrganizationMember.belongsTo(Organization, { foreignKey: 'organizationId', as: 'organization' });
+
+// OrganizationMember -> User
+OrganizationMember.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(OrganizationMember, { foreignKey: 'userId', as: 'organizationMemberships' });
+
+// Organization -> Owner
+Organization.belongsTo(User, { foreignKey: 'ownerId', as: 'owner' });
+User.hasMany(Organization, { foreignKey: 'ownerId', as: 'ownedOrganizations' });
+
+// Organization -> Transaction (for data isolation)
+Organization.hasMany(Transaction, { foreignKey: 'organizationId', as: 'transactions' });
+Organization.hasMany(Category, { foreignKey: 'organizationId', as: 'categories' });
+Organization.hasMany(Budget, { foreignKey: 'organizationId', as: 'budgets' });
+Organization.hasMany(Goal, { foreignKey: 'organizationId', as: 'goals' });
+Organization.hasMany(Tag, { foreignKey: 'organizationId', as: 'tags' });
+Organization.hasMany(RecurringRule, { foreignKey: 'organizationId', as: 'recurringRules' });
+
+export { User, Transaction, Category, AuditLog, Tag, TransactionTag, Budget, Goal, RecurringRule, Organization, OrganizationMember };
