@@ -1,31 +1,32 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'node:crypto';
+import type { TokenPayload } from '../types/auth.types.js';
 
 const JWT_SECRET: string = process.env.JWT_SECRET ?? (() => { throw new Error('JWT_SECRET environment variable is required'); })();
-const expiresSetting = process.env.JWT_EXPIRES_IN || '1d';
+const ACCESS_EXPIRES = process.env.JWT_ACCESS_EXPIRES_IN || '15m';
+const REFRESH_EXPIRES_DAYS = parseInt(process.env.JWT_REFRESH_EXPIRES_IN || '7', 10);
 
-interface TokenPayload {
-  userId: string;
-  role: 'admin' | 'user' | 'company';
-  status: string;
-  tokenVersion: number;
-  organizationId?: string;
+function createAccessToken(payload: TokenPayload): string {
+  return jwt.sign(payload as object, JWT_SECRET, { expiresIn: ACCESS_EXPIRES } as jwt.SignOptions);
 }
 
-type StrictSignOptions = Omit<jwt.SignOptions, 'expiresIn'> & {
-  expiresIn: string | number;
-};
+function createRefreshTokenString(): string {
+  return crypto.randomBytes(40).toString('hex');
+}
 
-function createToken(payload: TokenPayload): string {
-  return jwt.sign(payload as object, JWT_SECRET, { expiresIn: expiresSetting } as jwt.SignOptions);
+function getRefreshExpiresAt(): Date {
+  const date = new Date();
+  date.setDate(date.getDate() + REFRESH_EXPIRES_DAYS);
+  return date;
 }
 
 export const JwtUtil = {
   generateToken: (payload: TokenPayload): string => {
-    return createToken(payload);
+    return createAccessToken(payload);
   },
 
   generateTokenWithOrg: (userId: string, role: string, organizationId: string): string => {
-    return createToken({
+    return createAccessToken({
       userId,
       role: role as 'admin' | 'user' | 'company',
       status: 'active',
@@ -35,7 +36,7 @@ export const JwtUtil = {
   },
 
   generateTokenWithoutOrg: (userId: string, role: string): string => {
-    return createToken({
+    return createAccessToken({
       userId,
       role: role as 'admin' | 'user' | 'company',
       status: 'active',
@@ -43,7 +44,11 @@ export const JwtUtil = {
     });
   },
 
+  createAccessToken,
+  createRefreshTokenString,
+  getRefreshExpiresAt,
+
   verifyToken: (token: string): TokenPayload => {
     return jwt.verify(token, JWT_SECRET) as TokenPayload;
-  }
+  },
 };

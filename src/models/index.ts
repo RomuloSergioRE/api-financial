@@ -9,6 +9,7 @@ import Goal from './goal.model.js';
 import RecurringRule from './recurring-rule.model.js';
 import Organization from './organization.model.js';
 import OrganizationMember from './organization-member.model.js';
+import RefreshToken from './refresh-token.model.js';
 
 // User -> Transaction
 User.hasMany(Transaction, { foreignKey: 'userId', as: 'transactions' });
@@ -92,4 +93,8 @@ Organization.hasMany(Goal, { foreignKey: 'organizationId', as: 'goals' });
 Organization.hasMany(Tag, { foreignKey: 'organizationId', as: 'tags' });
 Organization.hasMany(RecurringRule, { foreignKey: 'organizationId', as: 'recurringRules' });
 
-export { User, Transaction, Category, AuditLog, Tag, TransactionTag, Budget, Goal, RecurringRule, Organization, OrganizationMember };
+// User -> RefreshToken
+User.hasMany(RefreshToken, { foreignKey: 'userId', as: 'refreshTokens' });
+RefreshToken.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+export { User, Transaction, Category, AuditLog, Tag, TransactionTag, Budget, Goal, RecurringRule, Organization, OrganizationMember, RefreshToken };
