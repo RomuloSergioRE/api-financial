@@ -37,6 +37,14 @@ const passwordLimiter = rateLimit({
   message: { error: 'Too many password change attempts. Please wait 1 minute.' },
 });
 
+const logoutLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too many logout attempts. Please wait 1 minute.' },
+});
+
 authRouter.post('/register', registerLimiter, AuthController.register);
 authRouter.post('/login', loginLimiter, AuthController.login);
 authRouter.post('/refresh', refreshLimiter, AuthController.refresh);
@@ -44,5 +52,7 @@ authRouter.post('/refresh', refreshLimiter, AuthController.refresh);
 authRouter.get('/me', authMiddleware, AuthController.me);
 authRouter.put('/profile', authMiddleware, AuthController.updateProfile);
 authRouter.put('/password', authMiddleware, passwordLimiter, AuthController.updatePassword);
+
+authRouter.post('/logout', authMiddleware, logoutLimiter, AuthController.logout);
 
 export default authRouter;

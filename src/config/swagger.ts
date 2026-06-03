@@ -97,7 +97,8 @@ export function getSwaggerDocument(renderUrl?: string): OpenAPIV3.Document {
                   schema: {
                     type: 'object',
                     properties: {
-                      token: { type: 'string', example: 'eyJhbGciOiJIUzI1Ni...' },
+                      accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1Ni...' },
+                      refreshToken: { type: 'string', example: 'a1b2c3d4e5f678901234567890abcdef' },
                       user: {
                         type: 'object',
                         properties: {
@@ -120,7 +121,7 @@ export function getSwaggerDocument(renderUrl?: string): OpenAPIV3.Document {
       },
       '/auth/refresh': {
         post: {
-          summary: 'Renova o token JWT antes da expiração',
+          summary: 'Renova o access token usando refresh token (rotação)',
           tags: ['Autenticação'],
           requestBody: {
             required: true,
@@ -128,17 +129,56 @@ export function getSwaggerDocument(renderUrl?: string): OpenAPIV3.Document {
               'application/json': {
                 schema: {
                   type: 'object',
-                  required: ['token'],
+                  required: ['refreshToken'],
                   properties: {
-                    token: { type: 'string', example: 'eyJhbGciOiJIUzI1Ni...' },
+                    refreshToken: { type: 'string', example: 'a1b2c3d4e5f678901234567890abcdef' },
                   },
                 },
               },
             },
           },
           responses: {
-            '200': { description: 'Novo token gerado.' },
-            '401': { description: 'Token inválido ou expirado.' },
+            '200': {
+              description: 'Novos tokens gerados (o refresh token anterior é invalidado).',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1Ni...' },
+                      refreshToken: { type: 'string', example: 'b2c3d4e5f678901234567890abcdef01' },
+                    },
+                  },
+                },
+              },
+            },
+            '401': { description: 'Refresh token inválido, expirado ou reusado (ataque detectado).' },
+          },
+        },
+      },
+      '/auth/logout': {
+        post: {
+          summary: 'Encerra a sessão e invalida o refresh token',
+          tags: ['Autenticação'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['refreshToken'],
+                  properties: {
+                    refreshToken: { type: 'string', example: 'a1b2c3d4e5f678901234567890abcdef' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '204': { description: 'Sessão encerrada com sucesso.' },
+            '400': { description: 'Dados inválidos.' },
+            '401': { description: 'Token JWT ou refresh token inválido.' },
           },
         },
       },

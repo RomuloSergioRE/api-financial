@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service.js';
 import type { UserUpdateInput } from '../types/user.types.js';
-import { registerSchema, loginSchema, updateProfileSchema, updatePasswordSchema } from '../validators/auth.validator.js';
+import { registerSchema, loginSchema, updateProfileSchema, updatePasswordSchema, refreshSchema, logoutSchema } from '../validators/auth.validator.js';
 import { handleControllerError } from '../utils/errors.js';
 
 export const AuthController = {
@@ -59,20 +59,22 @@ export const AuthController = {
 
   refresh: async (req: Request, res: Response): Promise<void> => {
     try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        res.status(401).json({ error: 'No token provided.' });
-        return;
-      }
-      const [scheme, token] = authHeader.split(' ');
-      if (scheme !== 'Bearer' || !token) {
-        res.status(401).json({ error: 'Token malformatted.' });
-        return;
-      }
-      const newToken = await AuthService.refreshToken(token);
-      res.status(200).json({ token: newToken });
+      const { refreshToken } = refreshSchema.parse(req.body);
+      const result = await AuthService.refreshToken(refreshToken);
+      res.status(200).json(result);
     } catch (error) {
       handleControllerError(res, error);
     }
-  }
+  },
+
+  logout: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { refreshToken } = logoutSchema.parse(req.body);
+      const userId = req.user!.id;
+      await AuthService.logout(refreshToken, userId);
+      res.status(204).send();
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
 };

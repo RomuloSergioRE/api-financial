@@ -19,9 +19,11 @@
                   "pm.test(\"Login admin efetuado com sucesso\", function () {",
                   "    pm.response.to.have.status(200);",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.have.property(\"token\");",
+                  "    pm.expect(jsonData).to.have.property(\"accessToken\");",
+                  "    pm.expect(jsonData).to.have.property(\"refreshToken\");",
                   "    pm.expect(jsonData.user.role).to.eql(\"admin\");",
-                  "    pm.environment.set(\"admin_token\", jsonData.token);",
+                  "    pm.environment.set(\"admin_token\", jsonData.accessToken);",
+                  "    pm.environment.set(\"admin_refresh_token\", jsonData.refreshToken);",
                   "});"
                 ],
                 "type": "text/javascript",
