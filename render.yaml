@@ -16,16 +16,30 @@ services:
         value: "true"
       - key: JWT_EXPIRES_IN
         value: 1d
-      - fromGroup: api-financial-db
+      - key: DB_HOST
+        fromDatabase:
+          name: api-financial-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: api-financial-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: api-financial-db
+          property: user
+      - key: DB_PASS
+        fromDatabase:
+          name: api-financial-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: api-financial-db
+          property: database
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGINS
         value: "https://app-financial.vercel.app,https://app-financial-git-main.vercel.app"
-      - key: RENDER_EXTERNAL_URL
-        fromService:
-          type: web
-          name: api-financial
-          property: host
 
 databases:
   - name: api-financial-db

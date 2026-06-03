@@ -275,7 +275,7 @@
           "response": []
         },
         {
-          "name": "Update User Status - Reactivate",
+          "name": "Reactivate User",
           "event": [
             {
               "listen": "test",
@@ -384,7 +384,7 @@
           "response": []
         },
         {
-          "name": "Update User Role - Restore",
+          "name": "Restore User Role",
           "event": [
             {
               "listen": "test",
@@ -486,6 +486,58 @@
     {
       "name": "Global Categories",
       "item": [
+        {
+          "name": "List Global Categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Categorias globais listadas\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an(\"array\");",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.expect(jsonData[0]).to.have.property(\"id\");",
+                  "        pm.expect(jsonData[0]).to.have.property(\"name\");",
+                  "        pm.expect(jsonData[0]).to.have.property(\"icon\");",
+                  "        pm.expect(jsonData[0]).to.have.property(\"color\");",
+                  "        pm.expect(jsonData[0].userId).to.be.null;",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "categories"]
+            }
+          },
+          "response": []
+        },
         {
           "name": "Create Global Category",
           "event": [
@@ -645,7 +697,7 @@
       "description": "Gerenciamento de categorias globais do sistema"
     },
     {
-      "name": "Analytics",
+      "name": "Audit & Analytics",
       "item": [
         {
           "name": "Platform Overview",
@@ -745,9 +797,372 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "List Audit Logs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Audit logs listados\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property(\"data\");",
+                  "    pm.expect(jsonData).to.have.property(\"pagination\");",
+                  "    pm.expect(jsonData.pagination).to.have.property(\"page\");",
+                  "    pm.expect(jsonData.pagination).to.have.property(\"limit\");",
+                  "    pm.expect(jsonData.pagination).to.have.property(\"total\");",
+                  "    pm.expect(jsonData.pagination).to.have.property(\"totalPages\");",
+                  "    if (jsonData.data.length > 0) {",
+                  "        pm.expect(jsonData.data[0]).to.have.property(\"action\");",
+                  "        pm.expect(jsonData.data[0]).to.have.property(\"entity\");",
+                  "        pm.expect(jsonData.data[0]).to.have.property(\"performedBy\");",
+                  "        pm.expect(jsonData.data[0]).to.have.property(\"timestamp\");",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/audit-logs?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "audit-logs"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User Growth",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Crescimento de usuários retornado\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an(\"array\");",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.expect(jsonData[0]).to.have.property(\"period\");",
+                  "        pm.expect(jsonData[0]).to.have.property(\"totalUsers\");",
+                  "        pm.expect(jsonData[0]).to.have.property(\"newUsers\");",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/analytics/user-growth?startDate=2026-01-01&endDate=2026-12-31&granularity=month",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "analytics", "user-growth"],
+              "query": [
+                { "key": "startDate", "value": "2026-01-01" },
+                { "key": "endDate", "value": "2026-12-31" },
+                { "key": "granularity", "value": "month" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Performance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Performance da plataforma retornada\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property(\"avgResponseTime\");",
+                  "    pm.expect(jsonData).to.have.property(\"uptimePercentage\");",
+                  "    pm.expect(jsonData).to.have.property(\"totalRequestsLast24h\");",
+                  "    pm.expect(jsonData).to.have.property(\"errorRate\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/analytics/performance",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "analytics", "performance"]
+            }
+          },
+          "response": []
         }
       ],
-      "description": "Analytics administrativos da plataforma"
+      "description": "Auditoria e analytics administrativos da plataforma"
+    },
+    {
+      "name": "Admin Exports",
+      "item": [
+        {
+          "name": "Export Users CSV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Exportação de usuários realizada\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"csv\");",
+                  "    pm.expect(pm.response.headers.get(\"Content-Disposition\")).to.include(\".csv\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/export/users/csv",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "export", "users", "csv"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Export All Transactions CSV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Exportação de transações realizada\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"csv\");",
+                  "    pm.expect(pm.response.headers.get(\"Content-Disposition\")).to.include(\".csv\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/export/transactions/csv",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "export", "transactions", "csv"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Export Audit Logs CSV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Exportação de audit logs realizada\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"csv\");",
+                  "    pm.expect(pm.response.headers.get(\"Content-Disposition\")).to.include(\".csv\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/export/audit-logs/csv",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "export", "audit-logs", "csv"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Exportacao de dados administrativos em CSV"
+    },
+    {
+      "name": "Admin Imports",
+      "item": [
+        {
+          "name": "Import Transactions CSV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Importação de transações realizada\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property(\"importedCount\");",
+                  "    pm.expect(jsonData).to.have.property(\"failedCount\");",
+                  "    pm.expect(jsonData).to.have.property(\"errors\");",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Arquivo CSV com as transacoes a serem importadas"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/import/transactions/csv",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "import", "transactions", "csv"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Importacao de dados administrativos via CSV"
     }
   ],
   "variable": [

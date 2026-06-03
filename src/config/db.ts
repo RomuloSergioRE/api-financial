@@ -3,13 +3,22 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const dbName = process.env.DB_NAME;
-const dbUser = process.env.DB_USER;
-const dbPass = process.env.DB_PASS;
-const dbHost = process.env.DB_HOST;
-const dbPort = process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432;
+let dbName = process.env.DB_NAME;
+let dbUser = process.env.DB_USER;
+let dbPass = process.env.DB_PASS;
+let dbHost = process.env.DB_HOST;
+let dbPort = process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432;
 const useSSL = process.env.DB_USE_SSL === 'true';
 const rejectUnauthorized = process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false';
+
+if (!dbName && !dbHost && process.env.DATABASE_URL) {
+  const url = new URL(process.env.DATABASE_URL);
+  dbHost = url.hostname;
+  dbPort = url.port ? parseInt(url.port, 10) : 5432;
+  dbUser = decodeURIComponent(url.username);
+  dbPass = decodeURIComponent(url.password);
+  dbName = url.pathname.slice(1);
+}
 
 if (!dbName || !dbUser || !dbPass || !dbHost) {
   throw new Error('❌ Missing database environment variables.');
