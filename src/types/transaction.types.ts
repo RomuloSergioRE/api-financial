@@ -1,3 +1,5 @@
+import type { TagDTO } from './tag.types.js';
+
 type Type = 'income' | 'outcome' 
 type Create ='id' | 'userId' | 'createdAt' | 'updatedAt' | 'deletedAt'
 
@@ -12,6 +14,7 @@ export interface TransactionInterface {
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
+  tags?: TagDTO[];
 }
 
 export type TransactionCreateInput = Omit<TransactionInterface, Create>;

@@ -1,5 +1,5 @@
 import { Op, fn, col } from 'sequelize';
-import { Transaction, Category, User, AuditLog } from '../models/index.js';
+import { Transaction, Category, User, AuditLog, Tag, TransactionTag } from '../models/index.js';
 import type {
   TransactionExportRow,
   CategoryExportRow,
@@ -58,6 +58,29 @@ function buildDateRange(filters: TransactionExportFilters): Record<symbol, Date>
   return undefined;
 }
 
+async function fetchTagsForTransactions(transactionIds: string[]): Promise<Map<string, string>> {
+  if (transactionIds.length === 0) return new Map();
+  const links = await TransactionTag.findAll({
+    where: { transactionId: { [Op.in]: transactionIds } },
+    include: [{ model: Tag, as: 'tag', attributes: ['name'] }],
+  });
+  const tagMap = new Map<string, string[]>();
+  for (const link of links) {
+    const tid = link.transactionId;
+    const name = (link as unknown as { tag?: { name: string } }).tag?.name;
+    if (name) {
+      const existing = tagMap.get(tid) ?? [];
+      existing.push(name);
+      tagMap.set(tid, existing);
+    }
+  }
+  const result = new Map<string, string>();
+  for (const [tid, names] of tagMap) {
+    result.set(tid, names.join(', '));
+  }
+  return result;
+}
+
 export const ExportService = {
   async exportTransactionsCSV(
     userId: string,
@@ -84,6 +107,9 @@ export const ExportService = {
       nest: true,
     });
 
+    const transactionIds = (transactions as unknown as Array<{ id: string }>).map(t => t.id);
+    const tagMap = await fetchTagsForTransactions(transactionIds);
+
     const rows: CsvRow[] = (transactions as unknown as Array<{
       id: string;
       date: Date;
@@ -100,6 +126,7 @@ export const ExportService = {
       categoryId: t.categoryId,
       categoryName: t.category?.name ?? '',
       description: t.description,
+      tags: tagMap.get(t.id) ?? '',
     }));
 
     const columns: StringifyColumns = [
@@ -110,6 +137,7 @@ export const ExportService = {
       { key: 'categoryId', header: 'Category ID' },
       { key: 'categoryName', header: 'Category Name' },
       { key: 'description', header: 'Description' },
+      { key: 'tags', header: 'Tags' },
     ];
 
     const content = stringifyCSV(rows, columns);
@@ -285,6 +313,9 @@ export const ExportService = {
       nest: true,
     });
 
+    const transactionIds = (transactions as unknown as Array<{ id: string }>).map(t => t.id);
+    const tagMap = await fetchTagsForTransactions(transactionIds);
+
     const rows: CsvRow[] = (transactions as unknown as Array<{
       id: string;
       date: Date;
@@ -306,6 +337,7 @@ export const ExportService = {
       categoryId: t.categoryId,
       categoryName: t.category?.name ?? '',
       description: t.description,
+      tags: tagMap.get(t.id) ?? '',
     }));
 
     const columns: StringifyColumns = [
@@ -319,6 +351,7 @@ export const ExportService = {
       { key: 'categoryId', header: 'Category ID' },
       { key: 'categoryName', header: 'Category Name' },
       { key: 'description', header: 'Description' },
+      { key: 'tags', header: 'Tags' },
     ];
 
     const content = stringifyCSV(rows, columns);
@@ -381,6 +414,7 @@ export const ExportService = {
       amount: template.amount.toString(),
       type: template.type,
       date: template.date,
+      tags: 'supermercado, essencial',
     }];
 
     const columns: StringifyColumns = [
@@ -390,6 +424,7 @@ export const ExportService = {
       { key: 'amount', header: 'Amount (cents)' },
       { key: 'type', header: 'Type' },
       { key: 'date', header: 'Date (YYYY-MM-DD)' },
+      { key: 'tags', header: 'Tags' },
     ];
 
     const content = stringifyCSV(rows, columns);
@@ -423,7 +458,11 @@ export const ExportService = {
       nest: true,
     });
 
+    const transactionIds = (transactions as unknown as Array<{ id: string }>).map(t => t.id);
+    const tagMap = await fetchTagsForTransactions(transactionIds);
+
     const rows = (transactions as unknown as Array<{
+      id: string;
       date: Date;
       type: string;
       amount: number;
@@ -435,6 +474,7 @@ export const ExportService = {
       amount: formatCurrencyCents(Number(t.amount)),
       category: t.category?.name ?? 'Uncategorized',
       description: t.description,
+      tags: tagMap.get(t.id) ?? '',
     }));
 
     const totalIncome = (transactions as unknown as Array<{ type: string; amount: number }>)
@@ -445,10 +485,11 @@ export const ExportService = {
       .reduce((s, t) => s + Number(t.amount), 0);
 
     const columns: TableColumn[] = [
-      { key: 'date', header: 'Date', width: 80 },
-      { key: 'type', header: 'Type', width: 60, align: 'center' },
-      { key: 'category', header: 'Category', width: 100 },
-      { key: 'description', header: 'Description', width: 180 },
+      { key: 'date', header: 'Date', width: 70 },
+      { key: 'type', header: 'Type', width: 50, align: 'center' },
+      { key: 'category', header: 'Category', width: 90 },
+      { key: 'tags', header: 'Tags', width: 90 },
+      { key: 'description', header: 'Description', width: 140 },
       { key: 'amount', header: 'Amount', width: 80, align: 'right' },
     ];
 

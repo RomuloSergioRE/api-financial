@@ -2,8 +2,10 @@ import type { Request, Response } from 'express';
 import { TransactionService } from '../services/transaction.service.js';
 import type { TransactionUpdateInput } from '../types/transaction.types.js';
 import { createTransactionSchema, updateTransactionSchema } from '../validators/transaction.validator.js';
+import { linkTagsSchema } from '../validators/tag.validator.js';
 import { handleControllerError } from '../utils/errors.js';
 import { ExportService } from '../services/export.service.js';
+import { ImportService } from '../services/import.service.js';
 import { setCsvHeaders } from '../utils/csv.util.js';
 
 export const TransactionController = {
@@ -45,9 +47,13 @@ export const TransactionController = {
       const startDate = req.query.startDate as string | undefined;
       const endDate = req.query.endDate as string | undefined;
       const search = req.query.search as string | undefined;
+      const tags = req.query.tags as string | undefined;
+      const tagIds = tags ? tags.split(',').filter(Boolean) : undefined;
       const offset = (page - 1) * limit;
 
-      const { rows, total } = await TransactionService.findByUser(userId, { offset, limit }, categoryId, startDate, endDate, search);
+      const { rows, total } = await TransactionService.findByUser(
+        userId, { offset, limit }, categoryId, startDate, endDate, search, tagIds
+      );
       
       res.status(200).json({
         data: rows,
@@ -155,6 +161,32 @@ export const TransactionController = {
     }
   },
 
+  importCSV: async (req: Request, res: Response): Promise<void> => {
+    try {
+      if (!req.user?.id) {
+        res.status(401).json({ error: 'Unauthorized: User missing' });
+        return;
+      }
+
+      const file = req.file;
+      if (!file) {
+        res.status(400).json({ error: 'No file uploaded. Send a CSV file in the "file" field.' });
+        return;
+      }
+
+      const result = await ImportService.importTransactions(req.user.id, file.buffer);
+
+      if (result.errors.length > 0 && result.imported === 0) {
+        res.status(422).json(result);
+        return;
+      }
+
+      res.status(result.errors.length > 0 ? 207 : 200).json(result);
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
   exportPDF: async (req: Request, res: Response): Promise<void> => {
     try {
       if (!req.user?.id) {
@@ -177,6 +209,44 @@ export const TransactionController = {
         .set('Content-Disposition', `inline; filename="${filename}"`)
         .status(200)
         .send(buffer);
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  addTags: async (req: Request, res: Response): Promise<void> => {
+    try {
+      if (!req.user?.id) {
+        res.status(401).json({ error: 'Unauthorized: User missing' });
+        return;
+      }
+
+      const transactionId = req.params.id as string;
+      const { tagIds } = linkTagsSchema.parse(req.body);
+
+      await TransactionService.linkTags(transactionId, req.user.id, tagIds);
+
+      const transaction = await TransactionService.findByIdAndUser(transactionId, req.user.id);
+      res.status(200).json(transaction);
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  removeTag: async (req: Request, res: Response): Promise<void> => {
+    try {
+      if (!req.user?.id) {
+        res.status(401).json({ error: 'Unauthorized: User missing' });
+        return;
+      }
+
+      const transactionId = req.params.id as string;
+      const tagId = req.params.tagId as string;
+
+      await TransactionService.unlinkTag(transactionId, req.user.id, tagId);
+
+      const transaction = await TransactionService.findByIdAndUser(transactionId, req.user.id);
+      res.status(200).json(transaction);
     } catch (error) {
       handleControllerError(res, error);
     }

@@ -1,9 +1,11 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { authorize } from '../middlewares/authorization.middleware.js';
 import { AdminController } from '../controllers/admin.controller.js';
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.use(authMiddleware);
 router.use(authorize('admin'));
@@ -28,5 +30,8 @@ router.get('/analytics/users/:id', AdminController.getUserAnalytics);
 router.get('/export/users/csv', AdminController.exportUsersCSV);
 router.get('/export/transactions/csv', AdminController.exportAllTransactionsCSV);
 router.get('/export/audit-logs/csv', AdminController.exportAuditLogsCSV);
+
+// Imports
+router.post('/import/transactions/csv', upload.single('file'), AdminController.importTransactionsCSV);
 
 export default router;

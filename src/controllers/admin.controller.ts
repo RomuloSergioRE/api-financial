@@ -10,6 +10,7 @@ import {
 } from '../validators/admin.validator.js';
 import { handleControllerError } from '../utils/errors.js';
 import { ExportService } from '../services/export.service.js';
+import { ImportService } from '../services/import.service.js';
 import { setCsvHeaders } from '../utils/csv.util.js';
 
 export const AdminController = {
@@ -176,6 +177,27 @@ export const AdminController = {
       const { content, filename } = await ExportService.exportAuditLogsCSV();
       setCsvHeaders(res, filename);
       res.status(200).send(content);
+    } catch (error) {
+      handleControllerError(res, error);
+    }
+  },
+
+  importTransactionsCSV: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const file = req.file;
+      if (!file) {
+        res.status(400).json({ error: 'No file uploaded. Send a CSV file in the "file" field.' });
+        return;
+      }
+
+      const result = await ImportService.importTransactionsAdmin(req.user!.id, file.buffer);
+
+      if (result.errors.length > 0 && result.imported === 0) {
+        res.status(422).json(result);
+        return;
+      }
+
+      res.status(result.errors.length > 0 ? 207 : 200).json(result);
     } catch (error) {
       handleControllerError(res, error);
     }
