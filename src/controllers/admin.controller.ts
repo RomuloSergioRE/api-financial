@@ -1,22 +1,13 @@
 import type { Request, Response } from 'express';
 import { AdminService } from '../services/admin.service.js';
 import type { CategoryUpdateInput } from '../types/category.types.js';
-import {
-  updateUserStatusSchema,
-  updateUserRoleSchema,
-  createGlobalCategorySchema,
-  updateGlobalCategorySchema,
-  listUsersQuerySchema,
-  auditLogsQuerySchema,
-  userGrowthQuerySchema,
-} from '../validators/admin.validator.js';
 import { ExportService } from '../services/export.service.js';
 import { ImportService } from '../services/import.service.js';
 import { setCsvHeaders } from '../utils/csv.util.js';
 
 export const AdminController = {
   listUsers: async (req: Request, res: Response): Promise<void> => {
-    const { page, limit, role, status, search } = listUsersQuerySchema.parse(req.query);
+    const { page, limit, role, status, search } = req.validated as { page: number; limit: number; role?: string; status?: string; search?: string };
     const offset = (page - 1) * limit;
     const filters: { role?: string; status?: string; search?: string } = {};
     if (role) filters.role = role;
@@ -41,15 +32,15 @@ export const AdminController = {
 
   updateUserStatus: async (req: Request, res: Response): Promise<void> => {
     const targetId = req.params.id as string;
-    const { status } = updateUserStatusSchema.parse(req.body);
-    const updated = await AdminService.updateUserStatus(targetId, status, req.user!.id);
+    const { status } = req.body as { status: string };
+    const updated = await AdminService.updateUserStatus(targetId, status as 'active' | 'inactive' | 'suspended', req.user!.id);
     res.status(200).json(updated);
   },
 
   updateUserRole: async (req: Request, res: Response): Promise<void> => {
     const targetId = req.params.id as string;
-    const { role } = updateUserRoleSchema.parse(req.body);
-    const updated = await AdminService.updateUserRole(targetId, role, req.user!.id);
+    const { role } = req.body as { role: string };
+    const updated = await AdminService.updateUserRole(targetId, role as 'admin' | 'user' | 'company', req.user!.id);
     res.status(200).json(updated);
   },
 
@@ -60,19 +51,14 @@ export const AdminController = {
   },
 
   createGlobalCategory: async (req: Request, res: Response): Promise<void> => {
-    const validated = createGlobalCategorySchema.parse(req.body);
-    const category = await AdminService.createGlobalCategory({
-      name: validated.name,
-      icon: validated.icon ?? null,
-      color: validated.color ?? null,
-    });
+    const category = await AdminService.createGlobalCategory(req.body);
     res.status(201).json(category);
   },
 
   updateGlobalCategory: async (req: Request, res: Response): Promise<void> => {
     const id = req.params.id as string;
-    const validated = updateGlobalCategorySchema.parse(req.body);
     const updateData: CategoryUpdateInput = {};
+    const validated = req.body as { name?: string; icon?: string; color?: string };
     if (validated.name) updateData.name = validated.name;
     if (validated.icon !== undefined) updateData.icon = validated.icon ?? null;
     if (validated.color !== undefined) updateData.color = validated.color ?? null;
@@ -147,7 +133,7 @@ export const AdminController = {
   },
 
   listAuditLogs: async (req: Request, res: Response): Promise<void> => {
-    const { page, limit, adminId, action, targetType, startDate, endDate } = auditLogsQuerySchema.parse(req.query);
+    const { page, limit, adminId, action, targetType, startDate, endDate } = req.validated as { page: number; limit: number; adminId?: string; action?: string; targetType?: string; startDate?: string; endDate?: string };
     const offset = (page - 1) * limit;
     const filters: { adminId?: string; action?: string; targetType?: string; startDate?: string; endDate?: string } = {};
     if (adminId) filters.adminId = adminId;
@@ -163,7 +149,7 @@ export const AdminController = {
   },
 
   getUserGrowth: async (req: Request, res: Response): Promise<void> => {
-    const { startDate, endDate, granularity } = userGrowthQuerySchema.parse(req.query);
+    const { startDate, endDate, granularity } = req.validated as { startDate: string; endDate: string; granularity: 'day' | 'month' };
     const data = await AdminService.getUserGrowth(startDate, endDate, granularity);
     res.status(200).json(data);
   },

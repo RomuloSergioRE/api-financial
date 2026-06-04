@@ -1,6 +1,5 @@
 import type { Request, Response } from 'express';
 import { GoalService } from '../services/goal.service.js';
-import { createGoalSchema, updateGoalSchema } from '../validators/goal.validator.js';
 import type { GoalUpdateInput } from '../types/goal.types.js';
 
 export const GoalController = {
@@ -9,12 +8,14 @@ export const GoalController = {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
     }
-    const validated = createGoalSchema.parse(req.body);
+    const { name, targetAmount, categoryId, deadline } = req.body as {
+      name: string; targetAmount: number; categoryId?: string; deadline?: string;
+    };
     const data = {
-      name: validated.name,
-      targetAmount: validated.targetAmount,
-      categoryId: validated.categoryId ?? null,
-      deadline: validated.deadline ?? null,
+      name,
+      targetAmount,
+      categoryId: categoryId ?? null,
+      deadline: deadline ?? null,
     };
     const goal = await GoalService.create(req.user.id, data, req.user.organizationId);
     res.status(201).json(goal);
@@ -48,9 +49,8 @@ export const GoalController = {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
     }
-    const validated = updateGoalSchema.parse(req.body) as GoalUpdateInput;
     const id = req.params.id as string;
-    const updated = await GoalService.update(id, req.user.id, validated, req.user.organizationId);
+    const updated = await GoalService.update(id, req.user.id, req.body as GoalUpdateInput, req.user.organizationId);
     res.status(200).json(updated);
   },
 

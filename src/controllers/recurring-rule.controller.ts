@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import { RecurringRuleService } from '../services/recurring-rule.service.js';
-import { createRecurringRuleSchema, updateRecurringRuleSchema } from '../validators/recurring-rule.validator.js';
-import type { RecurringRuleCreateInput, RecurringRuleUpdateInput } from '../types/recurring-rule.types.js';
+import type { RecurringRuleUpdateInput } from '../types/recurring-rule.types.js';
 
 export const RecurringRuleController = {
   create: async (req: Request, res: Response): Promise<void> => {
@@ -9,18 +8,7 @@ export const RecurringRuleController = {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
     }
-    const validated = createRecurringRuleSchema.parse(req.body);
-    const data: RecurringRuleCreateInput = {
-      categoryId: validated.categoryId,
-      description: validated.description,
-      amount: validated.amount,
-      type: validated.type,
-      frequency: validated.frequency,
-      interval: validated.interval,
-      nextDate: validated.nextDate,
-      endDate: validated.endDate ?? null,
-    };
-    const rule = await RecurringRuleService.create(req.user.id, data, req.user.organizationId);
+    const rule = await RecurringRuleService.create(req.user.id, req.body, req.user.organizationId);
     res.status(201).json(rule);
   },
 
@@ -53,9 +41,8 @@ export const RecurringRuleController = {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
     }
-    const validated = updateRecurringRuleSchema.parse(req.body) as RecurringRuleUpdateInput;
     const id = req.params.id as string;
-    const updated = await RecurringRuleService.update(id, req.user.id, validated, req.user.organizationId);
+    const updated = await RecurringRuleService.update(id, req.user.id, req.body as RecurringRuleUpdateInput, req.user.organizationId);
     res.status(200).json(updated);
   },
 

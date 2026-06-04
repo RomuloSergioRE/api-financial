@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { AuthController } from '../controllers/auth.controller.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { validate } from '../middlewares/validation.middleware.js';
+import { registerSchema, loginSchema, updateProfileSchema, updatePasswordSchema, refreshSchema, logoutSchema } from '../validators/auth.validator.js';
 
 const authRouter = Router();
 
@@ -45,14 +47,14 @@ const logoutLimiter = rateLimit({
   message: { error: 'Too many logout attempts. Please wait 1 minute.' },
 });
 
-authRouter.post('/register', registerLimiter, AuthController.register);
-authRouter.post('/login', loginLimiter, AuthController.login);
-authRouter.post('/refresh', refreshLimiter, AuthController.refresh);
+authRouter.post('/register', registerLimiter, validate(registerSchema), AuthController.register);
+authRouter.post('/login', loginLimiter, validate(loginSchema), AuthController.login);
+authRouter.post('/refresh', refreshLimiter, validate(refreshSchema), AuthController.refresh);
 
 authRouter.get('/me', authMiddleware, AuthController.me);
-authRouter.put('/profile', authMiddleware, AuthController.updateProfile);
-authRouter.put('/password', authMiddleware, passwordLimiter, AuthController.updatePassword);
+authRouter.put('/profile', authMiddleware, validate(updateProfileSchema), AuthController.updateProfile);
+authRouter.put('/password', authMiddleware, passwordLimiter, validate(updatePasswordSchema), AuthController.updatePassword);
 
-authRouter.post('/logout', authMiddleware, logoutLimiter, AuthController.logout);
+authRouter.post('/logout', authMiddleware, logoutLimiter, validate(logoutSchema), AuthController.logout);
 
 export default authRouter;

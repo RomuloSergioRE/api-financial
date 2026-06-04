@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import { CategoryService } from '../services/category.service.js';
 import type { CategoryUpdateInput } from '../types/category.types.js';
-import { createCategorySchema, updateCategorySchema } from '../validators/category.validator.js';
 import { ExportService } from '../services/export.service.js';
 import { ImportService } from '../services/import.service.js';
 import { setCsvHeaders } from '../utils/csv.util.js';
@@ -12,11 +11,11 @@ export const CategoryController = {
           res.status(401).json({ error: 'Unauthorized: User missing' });
           return;
         }
-        const validated = createCategorySchema.parse(req.body);
+        const { name, icon, color } = req.body as { name: string; icon?: string | null; color?: string | null };
         const category = await CategoryService.create(req.user.id, {
-          name: validated.name,
-          icon: validated.icon ?? null,
-          color: validated.color ?? null,
+          name,
+          icon: icon ?? null,
+          color: color ?? null,
         }, req.user.organizationId);
         res.status(201).json(category);
     },
@@ -56,8 +55,8 @@ export const CategoryController = {
           res.status(401).json({ error: 'Unauthorized: User missing' });
           return;
         }
-        const validated = updateCategorySchema.parse(req.body);
         const id = req.params.id as string;
+        const validated = req.body as { name?: string; icon?: string | null; color?: string | null };
         const updateData: CategoryUpdateInput = {};
         if (validated.name) updateData.name = validated.name;
         if (validated.icon !== undefined) updateData.icon = validated.icon ?? null;

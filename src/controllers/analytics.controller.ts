@@ -3,17 +3,7 @@ import { z } from 'zod';
 import { AnalyticsService } from '../services/analytics.service.js';
 import { ExportService } from '../services/export.service.js';
 import { setCsvHeaders } from '../utils/csv.util.js';
-
-const analyticsQuerySchema = z.object({
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD").optional(),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD").optional(),
-  categoryId: z.string().uuid("Invalid UUID").optional(),
-});
-
-const monthYearSchema = z.object({
-  month: z.coerce.number().int().min(1).max(12).optional(),
-  year: z.coerce.number().int().min(2000).max(2100).optional(),
-});
+import { analyticsQuerySchema, monthYearSchema } from '../validators/analytics.validator.js';
 
 export const AnalyticsController = {
   getBalance: async (req: Request, res: Response): Promise<void> => {
@@ -21,8 +11,7 @@ export const AnalyticsController = {
       res.status(401).json({ error: 'Unauthorized: User identity missing.' });
       return;
     }
-    const validatedQuery = analyticsQuerySchema.parse(req.query);
-    const balanceData = await AnalyticsService.getBalanceSummary(req.user.id, validatedQuery);
+    const balanceData = await AnalyticsService.getBalanceSummary(req.user.id, req.validated as Record<string, unknown>);
     res.status(200).json(balanceData);
   },
 
@@ -31,8 +20,7 @@ export const AnalyticsController = {
       res.status(401).json({ error: 'Unauthorized: User identity missing.' });
       return;
     }
-    const validatedQuery = analyticsQuerySchema.parse(req.query);
-    const distributionData = await AnalyticsService.getCategoryDistribution(req.user.id, validatedQuery);
+    const distributionData = await AnalyticsService.getCategoryDistribution(req.user.id, req.validated as Record<string, unknown>);
     res.status(200).json(distributionData);
   },
 
@@ -41,8 +29,7 @@ export const AnalyticsController = {
       res.status(401).json({ error: 'Unauthorized: User identity missing.' });
       return;
     }
-    const validatedQuery = analyticsQuerySchema.parse(req.query);
-    const data = await AnalyticsService.getMonthlySeries(req.user.id, validatedQuery);
+    const data = await AnalyticsService.getMonthlySeries(req.user.id, req.validated as Record<string, unknown>);
     res.status(200).json(data);
   },
 
@@ -51,7 +38,7 @@ export const AnalyticsController = {
       res.status(401).json({ error: 'Unauthorized: User identity missing.' });
       return;
     }
-    const { month, year } = monthYearSchema.parse(req.query);
+    const { month, year } = req.validated as { month?: number; year?: number };
     const data = await AnalyticsService.getComparison(req.user.id, month, year);
     res.status(200).json(data);
   },
@@ -61,7 +48,7 @@ export const AnalyticsController = {
       res.status(401).json({ error: 'Unauthorized: User identity missing.' });
       return;
     }
-    const validatedQuery = analyticsQuerySchema.parse(req.query);
+    const validatedQuery = req.validated as Record<string, unknown>;
     const limit = req.query.limit ? z.coerce.number().int().positive().parse(req.query.limit) : 5;
     const data = await AnalyticsService.getTopCategories(req.user.id, validatedQuery, limit);
     res.status(200).json(data);
@@ -72,7 +59,7 @@ export const AnalyticsController = {
       res.status(401).json({ error: 'Unauthorized: User identity missing.' });
       return;
     }
-    const { month, year } = monthYearSchema.parse(req.query);
+    const { month, year } = req.validated as { month?: number; year?: number };
     const data = await AnalyticsService.getExecutiveSummary(req.user.id, month, year);
     res.status(200).json(data);
   },
@@ -92,8 +79,7 @@ export const AnalyticsController = {
       res.status(401).json({ error: 'Unauthorized: User identity missing.' });
       return;
     }
-    const validatedQuery = analyticsQuerySchema.parse(req.query);
-    const { content, filename } = await ExportService.exportAnalyticsCSV(req.user.id, validatedQuery);
+    const { content, filename } = await ExportService.exportAnalyticsCSV(req.user.id, req.validated as Record<string, unknown>);
     setCsvHeaders(res, filename);
     res.status(200).send(content);
   },
@@ -103,8 +89,7 @@ export const AnalyticsController = {
       res.status(401).json({ error: 'Unauthorized: User identity missing.' });
       return;
     }
-    const validatedQuery = analyticsQuerySchema.parse(req.query);
-    const { buffer, filename } = await ExportService.exportAnalyticsPDF(req.user.id, validatedQuery);
+    const { buffer, filename } = await ExportService.exportAnalyticsPDF(req.user.id, req.validated as Record<string, unknown>);
     res
       .contentType('application/pdf')
       .set('Content-Disposition', `inline; filename="${filename}"`)
