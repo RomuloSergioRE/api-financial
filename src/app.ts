@@ -8,6 +8,8 @@ import { getSwaggerDocument } from './config/swagger.js';
 import routes from './routes/index.js'; 
 import { requestIdMiddleware } from './middlewares/requestId.middleware.js';
 import { metricsMiddleware } from './middlewares/metrics.middleware.js';
+import { z } from 'zod';
+import { BusinessError } from './utils/errors.js';
 import { logger, getRequestId } from './utils/logger.js';
 import sequelize from './config/db.js';
 
@@ -93,7 +95,15 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({ error: `Route ${req.originalUrl} not found` });
 });
 
-app.use((error: any, req: Request, res: Response, next: NextFunction) => {
+app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
+  if (error instanceof BusinessError) {
+    res.status(error.statusCode).json({ error: error.message });
+    return;
+  }
+  if (error instanceof z.ZodError) {
+    res.status(400).json({ error: 'Validation Error', details: error.issues });
+    return;
+  }
   const requestId = getRequestId();
   logger.error('Unhandled error in global middleware', error);
   res.status(500).json({ error: 'Internal Server Error', requestId });

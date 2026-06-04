@@ -12,5 +12,8 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
 }
 
 export function getMetrics(): { requestCount: number; errorCount: number } {
-  return { requestCount, errorCount };
+  const result = { requestCount, errorCount };
+  requestCount = 0;
+  errorCount = 0;
+  return result;
 }

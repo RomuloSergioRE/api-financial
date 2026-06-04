@@ -4,14 +4,12 @@ import { GoalRepository } from '../repositories/goal.repository.js';
 import Goal from '../models/goal.model.js';
 import Transaction from '../models/transaction.model.js';
 import Category from '../models/category.model.js';
-import { resolveOrgMemberIds } from '../utils/org-resolver.js';
+import { resolveOrgContext } from '../utils/org-resolver.js';
 import type { GoalInterface, GoalCreateInput, GoalUpdateInput, GoalDTO } from '../types/goal.types.js';
+import type { OrgContext } from '../types/organization.types.js';
 import { BusinessError } from '../utils/errors.js';
 
-interface OrgContext {
-  memberIds: string[];
-  orgId: string;
-}
+type WithCategoryName = { category?: { name: string } };
 
 const mapToGoalDTO = (goal: GoalInterface, categoryName = 'Unknown'): GoalDTO => {
   const progress = goal.targetAmount > 0
@@ -40,29 +38,29 @@ export const GoalService = {
   },
 
   findByUser: async (userId: string, orgId?: string): Promise<GoalDTO[]> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
     const goals = await GoalRepository.findByUser(userId, orgContext);
-    return goals.map(g => mapToGoalDTO(g, (g as unknown as { category?: { name: string } }).category?.name ?? 'Unknown'));
+    return goals.map(g => mapToGoalDTO(g, (g as unknown as WithCategoryName).category?.name ?? 'Unknown'));
   },
 
   findByIdAndUser: async (id: string, userId: string, orgId?: string): Promise<GoalDTO | null> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
     const goal = await GoalRepository.findByIdAndUser(id, userId, orgContext);
     if (!goal) return null;
-    return mapToGoalDTO(goal, (goal as unknown as { category?: { name: string } }).category?.name ?? 'Unknown');
+    return mapToGoalDTO(goal, (goal as unknown as WithCategoryName).category?.name ?? 'Unknown');
   },
 
   update: async (id: string, userId: string, data: GoalUpdateInput, orgId?: string): Promise<GoalDTO> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
     const updated = await GoalRepository.update(id, userId, data, orgContext);
     if (!updated) {
       throw new BusinessError('Goal not found', 404);
     }
-    return mapToGoalDTO(updated, (updated as unknown as { category?: { name: string } }).category?.name ?? 'Unknown');
+    return mapToGoalDTO(updated, (updated as unknown as WithCategoryName).category?.name ?? 'Unknown');
   },
 
   delete: async (id: string, userId: string, orgId?: string): Promise<void> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
     const success = await GoalRepository.delete(id, userId, orgContext);
     if (!success) {
       throw new BusinessError('Goal not found', 404);

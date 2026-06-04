@@ -27,6 +27,12 @@ type MonthlySeriesRow = {
   total: string;
 };
 
+type TopCategoryRow = {
+  categoryId: string;
+  total: string;
+  category?: { name: string };
+};
+
 function buildWhereCondition(userId: string, filters: AnalyticsFilterInput): WhereOptions {
   const whereCondition: WhereOptions = { userId };
 
@@ -250,11 +256,7 @@ export const AnalyticsService = {
       nest: true,
     });
 
-    const rows = results as unknown as Array<{
-      categoryId: string;
-      total: string;
-      category?: { name: string };
-    }>;
+    const rows = results as unknown as TopCategoryRow[];
 
     const totalPeriod = rows.reduce((sum, r) => sum + Number(r.total), 0);
 

@@ -20,6 +20,69 @@ import {
   type TableColumn,
 } from '../utils/pdf.util.js';
 
+type TransactionRawRow = {
+  id: string;
+  date: Date;
+  type: string;
+  amount: number;
+  categoryId: string;
+  description: string;
+  category?: { id: string; name: string };
+};
+
+type TransactionRawWithUserRow = TransactionRawRow & {
+  userId: string;
+  user?: { name: string; email: string };
+};
+
+type TransactionPdfRow = {
+  id: string;
+  date: Date;
+  type: string;
+  amount: number;
+  category?: { name: string };
+  description: string;
+};
+
+type CategoryRawRow = {
+  id: string;
+  name: string;
+  icon: string | null;
+  color: string | null;
+  userId: string | null;
+};
+
+type UserRawRow = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  createdAt: Date;
+};
+
+type AuditLogRawRow = {
+  id: string;
+  adminId: string;
+  action: string;
+  targetId: string;
+  targetType: string;
+  details: string | null;
+  createdAt: Date;
+};
+
+type AggregateRow = { type: string; total: string };
+
+type CategoryGroupRow = {
+  categoryId: string;
+  total: string;
+  category?: { name: string };
+};
+
+type MonthlySeriesRow = { month: string; type: string; total: string };
+
+type TransactionTagRow = { tag?: { name: string } };
+
 export interface TransactionExportFilters {
   startDate?: string | undefined;
   endDate?: string | undefined;
@@ -67,7 +130,7 @@ async function fetchTagsForTransactions(transactionIds: string[]): Promise<Map<s
   const tagMap = new Map<string, string[]>();
   for (const link of links) {
     const tid = link.transactionId;
-    const name = (link as unknown as { tag?: { name: string } }).tag?.name;
+    const name = (link as unknown as TransactionTagRow).tag?.name;
     if (name) {
       const existing = tagMap.get(tid) ?? [];
       existing.push(name);
@@ -115,18 +178,10 @@ export const ExportService = {
       nest: true,
     });
 
-    const transactionIds = (transactions as unknown as Array<{ id: string }>).map(t => t.id);
+    const transactionIds = (transactions as unknown as TransactionRawRow[]).map(t => t.id);
     const tagMap = await fetchTagsForTransactions(transactionIds);
 
-    const rows: CsvRow[] = (transactions as unknown as Array<{
-      id: string;
-      date: Date;
-      type: string;
-      amount: number;
-      categoryId: string;
-      description: string;
-      category?: { id: string; name: string };
-    }>).map(t => ({
+    const rows: CsvRow[] = (transactions as unknown as TransactionRawRow[]).map(t => ({
       id: t.id,
       date: toDateOnly(t.date),
       type: t.type,
@@ -172,13 +227,7 @@ export const ExportService = {
       order: [['name', 'ASC']],
     });
 
-    const rows: CsvRow[] = (categories as unknown as Array<{
-      id: string;
-      name: string;
-      icon: string | null;
-      color: string | null;
-      userId: string | null;
-    }>).map(c => ({
+    const rows: CsvRow[] = (categories as unknown as CategoryRawRow[]).map(c => ({
       id: c.id,
       name: c.name,
       icon: c.icon ?? '',
@@ -219,7 +268,7 @@ export const ExportService = {
       raw: true,
     });
 
-    const aggRows = aggregates as unknown as Array<{ type: string; total: string }>;
+    const aggRows = aggregates as unknown as AggregateRow[];
     const totalIncome = Number(aggRows.find(r => r.type === 'income')?.total || 0);
     const totalOutcome = Number(aggRows.find(r => r.type === 'outcome')?.total || 0);
     const netBalance = totalIncome - totalOutcome;
@@ -243,11 +292,7 @@ export const ExportService = {
       nest: true,
     });
 
-    const categoryRows = categoryGroups as unknown as Array<{
-      categoryId: string;
-      total: string;
-      category?: { name: string };
-    }>;
+    const categoryRows = categoryGroups as unknown as CategoryGroupRow[];
     const totalPeriod = categoryRows.reduce((sum, r) => sum + Number(r.total), 0);
 
     const monthlySeries = await Transaction.findAll({
@@ -263,7 +308,7 @@ export const ExportService = {
     });
 
     const seriesMap = new Map<string, { income: number; outcome: number }>();
-    for (const row of monthlySeries as unknown as Array<{ month: string; type: string; total: string }>) {
+    for (const row of monthlySeries as unknown as MonthlySeriesRow[]) {
       const prev = seriesMap.get(row.month) ?? { income: 0, outcome: 0 };
       if (row.type === 'income') prev.income += Number(row.total);
       else if (row.type === 'outcome') prev.outcome += Number(row.total);
@@ -324,14 +369,7 @@ export const ExportService = {
   async exportUsersCSV(): Promise<{ content: string; filename: string }> {
     const users = await User.findAll({ order: [['createdAt', 'DESC']] });
 
-    const rows: CsvRow[] = (users as unknown as Array<{
-      id: string;
-      name: string;
-      email: string;
-      role: string;
-      status: string;
-      createdAt: Date;
-    }>).map(u => ({
+    const rows: CsvRow[] = (users as unknown as UserRawRow[]).map(u => ({
       id: u.id,
       name: u.name,
       email: u.email,
@@ -374,20 +412,10 @@ export const ExportService = {
       nest: true,
     });
 
-    const transactionIds = (transactions as unknown as Array<{ id: string }>).map(t => t.id);
+    const transactionIds = (transactions as unknown as TransactionRawWithUserRow[]).map(t => t.id);
     const tagMap = await fetchTagsForTransactions(transactionIds);
 
-    const rows: CsvRow[] = (transactions as unknown as Array<{
-      id: string;
-      date: Date;
-      type: string;
-      amount: number;
-      description: string;
-      userId: string;
-      user?: { name: string; email: string };
-      categoryId: string;
-      category?: { name: string };
-    }>).map(t => ({
+    const rows: CsvRow[] = (transactions as unknown as TransactionRawWithUserRow[]).map(t => ({
       id: t.id,
       userId: t.userId,
       userName: t.user?.name ?? '',
@@ -424,15 +452,7 @@ export const ExportService = {
   async exportAuditLogsCSV(): Promise<{ content: string; filename: string }> {
     const logs = await AuditLog.findAll({ order: [['createdAt', 'DESC']] });
 
-    const rows: CsvRow[] = (logs as unknown as Array<{
-      id: string;
-      adminId: string;
-      action: string;
-      targetId: string;
-      targetType: string;
-      details: string | null;
-      createdAt: Date;
-    }>).map(l => ({
+    const rows: CsvRow[] = (logs as unknown as AuditLogRawRow[]).map(l => ({
       id: l.id,
       adminId: l.adminId,
       action: l.action,
@@ -527,17 +547,10 @@ export const ExportService = {
       nest: true,
     });
 
-    const transactionIds = (transactions as unknown as Array<{ id: string }>).map(t => t.id);
+    const transactionIds = (transactions as unknown as TransactionPdfRow[]).map(t => t.id);
     const tagMap = await fetchTagsForTransactions(transactionIds);
 
-    const rows = (transactions as unknown as Array<{
-      id: string;
-      date: Date;
-      type: string;
-      amount: number;
-      category?: { name: string };
-      description: string;
-    }>).map(t => ({
+    const rows = (transactions as unknown as TransactionPdfRow[]).map(t => ({
       date: formatDateUtil(t.date),
       type: t.type === 'income' ? 'Income' : 'Outcome',
       amount: formatCurrencyCents(Number(t.amount)),
@@ -546,10 +559,10 @@ export const ExportService = {
       tags: tagMap.get(t.id) ?? '',
     }));
 
-    const totalIncome = (transactions as unknown as Array<{ type: string; amount: number }>)
+    const totalIncome = (transactions as unknown as TransactionPdfRow[])
       .filter(t => t.type === 'income')
       .reduce((s, t) => s + Number(t.amount), 0);
-    const totalOutcome = (transactions as unknown as Array<{ type: string; amount: number }>)
+    const totalOutcome = (transactions as unknown as TransactionPdfRow[])
       .filter(t => t.type === 'outcome')
       .reduce((s, t) => s + Number(t.amount), 0);
 
@@ -591,12 +604,7 @@ export const ExportService = {
       order: [['name', 'ASC']],
     });
 
-    const rows = (categories as unknown as Array<{
-      name: string;
-      icon: string | null;
-      color: string | null;
-      userId: string | null;
-    }>).map(c => ({
+    const rows = (categories as unknown as CategoryRawRow[]).map(c => ({
       name: c.name,
       type: c.userId === null ? 'Global' : 'User',
       icon: c.icon ?? '-',
@@ -634,7 +642,7 @@ export const ExportService = {
       group: ['type'],
       raw: true,
     });
-    const aggRows = aggregates as unknown as Array<{ type: string; total: string }>;
+    const aggRows = aggregates as unknown as AggregateRow[];
     const totalIncome = Number(aggRows.find(r => r.type === 'income')?.total || 0);
     const totalOutcome = Number(aggRows.find(r => r.type === 'outcome')?.total || 0);
     const netBalance = totalIncome - totalOutcome;
@@ -649,11 +657,7 @@ export const ExportService = {
       raw: true,
       nest: true,
     });
-    const categoryRows = (categoryGroups as unknown as Array<{
-      categoryId: string;
-      total: string;
-      category?: { name: string };
-    }>).map(r => ({
+    const categoryRows = (categoryGroups as unknown as CategoryGroupRow[]).map(r => ({
       category: r.category?.name ?? 'Uncategorized',
       amount: Number(r.total),
     }));
@@ -674,7 +678,7 @@ export const ExportService = {
     });
 
     const seriesMap = new Map<string, { income: number; outcome: number }>();
-    for (const row of monthlySeries as unknown as Array<{ month: string; type: string; total: string }>) {
+    for (const row of monthlySeries as unknown as MonthlySeriesRow[]) {
       const prev = seriesMap.get(row.month) ?? { income: 0, outcome: 0 };
       if (row.type === 'income') prev.income += Number(row.total);
       else if (row.type === 'outcome') prev.outcome += Number(row.total);
