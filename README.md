@@ -47,7 +47,7 @@ API REST para gerenciamento financeiro pessoal e empresarial com autenticação 
 | **Express 5** | Framework web com middleware pipeline (Helmet, CORS, Rate Limit) |
 | **PostgreSQL** | Banco de dados relacional |
 | **Sequelize** | ORM com modelos, associações e soft delete (paranoid) |
-| **JWT + bcrypt** | Autenticação stateless e hash de senhas (10 rounds) |
+| **JWT + bcrypt** | Autenticação stateless e hash de senhas (12 rounds) |
 | **Zod** | Validação de schemas de entrada com tipagem inferida |
 | **Helmet** | Headers de segurança HTTP (CSP, X-Content-Type-Options, etc.) |
 | **express-rate-limit** | Rate limiting por IP |
@@ -82,8 +82,10 @@ O projeto segue uma arquitetura em camadas com separação clara de responsabili
 
 ### Módulos adicionais
 
+- **Validation Middleware** — Middleware `validate(schema, source)` que centraliza a validação Zod na camada de rota, definindo `req.body` (body) ou `req.validated` (query/params) com dados já tipados e sanitizados antes de chegar ao controller
 - **Export/Import Service** — Geração de CSV/PDF via csv-stringify e PDFKit, parse de CSV via csv-parse com multer para upload
 - **Recurring Scheduler** — Worker node-cron que verifica regras recorrentes vencidas e gera transações automaticamente
+- **Cleanup Scheduler** — Cron diário que deleta refresh tokens expirados (segurança) e cron mensal que purga registros soft-deleted com mais de 90 dias (retenção configurável)
 - **Org Context Resolver** — Middleware/utils que resolve a organização ativa do usuário para isolar dados por contexto
 
 ---
@@ -237,11 +239,11 @@ O projeto segue uma arquitetura em camadas com separação clara de responsabili
 
 ## Segurança
 
-- **Senhas hasheadas** com bcrypt (10 rounds)
+- **Senhas hasheadas** com bcrypt (12 rounds)
 - **Refresh token rotation** — Access tokens de curta duração (15min), refresh tokens opacos de 7 dias (single-use via hash SHA-256) com detecção de roubo: se um refresh token já usado for reapresentado, toda a família de tokens é revogada
 - **Logout real** — `POST /auth/logout` deleta o refresh token do banco de dados, encerrando a sessão efetivamente
 - **Troca de senha com revogação** — Ao alterar a senha, todos os refresh tokens do usuário são deletados, forçando re-login em todos os dispositivos
-- **Password complexity** — Mínimo 8 caracteres, pelo menos uma letra maiúscula, uma minúscula e um dígito
+- **Password complexity** — Mínimo 8 caracteres, pelo menos uma letra maiúscula, uma minúscula, um dígito e um caractere especial
 - **CORS configurável** — Via variável de ambiente `CORS_ORIGIN`, restrito por padrão a localhost
 - **CSP via Helmet** — Content-Security-Policy configurado com suporte a Swagger UI (CDN allowlist)
 - **Rate limiting**:
