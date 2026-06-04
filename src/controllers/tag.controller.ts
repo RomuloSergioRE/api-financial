@@ -1,8 +1,9 @@
 import type { Request, Response } from 'express';
+import { asyncHandler } from '../utils/async-handler.js';
 import { TagService } from '../services/tag.service.js';
 
 export const TagController = {
-  create: async (req: Request, res: Response): Promise<void> => {
+  create: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     if (!req.user?.id) {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
@@ -13,18 +14,18 @@ export const TagController = {
       color: color ?? null,
     }, req.user.organizationId);
     res.status(201).json(tag);
-  },
+  }),
 
-  getAll: async (req: Request, res: Response): Promise<void> => {
+  getAll: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     if (!req.user?.id) {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
     }
     const tags = await TagService.findByUser(req.user.id, req.user.organizationId);
     res.status(200).json(tags);
-  },
+  }),
 
-  getById: async (req: Request, res: Response): Promise<void> => {
+  getById: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     if (!req.user?.id) {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
@@ -36,9 +37,9 @@ export const TagController = {
       return;
     }
     res.status(200).json(tag);
-  },
+  }),
 
-  update: async (req: Request, res: Response): Promise<void> => {
+  update: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     if (!req.user?.id) {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
@@ -50,9 +51,9 @@ export const TagController = {
     if (validated.color !== undefined) updateData.color = validated.color ?? null;
     const updated = await TagService.update(id, req.user.id, updateData, req.user.organizationId);
     res.status(200).json(updated);
-  },
+  }),
 
-  delete: async (req: Request, res: Response): Promise<void> => {
+  delete: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     if (!req.user?.id) {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
@@ -60,5 +61,5 @@ export const TagController = {
     const id = req.params.id as string;
     await TagService.delete(id, req.user.id, req.user.organizationId);
     res.status(204).send();
-  },
+  }),
 };

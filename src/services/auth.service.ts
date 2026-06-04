@@ -5,6 +5,7 @@ import { JwtUtil } from '../utils/jwt.util.js';
 import type { UserCreation, UserInterface, UserUpdateInput } from '../types/user.types.js';
 import { SecurityHash } from '../utils/securityHash.util.js';
 import { BusinessError } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
 
 type UserDTO = Omit<UserInterface, 'password' | 'tokenVersion' | 'deletedAt'>;
 
@@ -15,23 +16,28 @@ const mapToUserDTO = (user: UserInterface): UserDTO => {
 
 export const AuthService = {
   register: async (userData: UserCreation): Promise<UserDTO> => {
-    const { email, password, name } = userData;
+    try {
+      const { email, password, name } = userData;
 
-    const userExists = await UserRepository.findByEmailWithDeleted(email);
+      const userExists = await UserRepository.findByEmailWithDeleted(email);
 
-    if (userExists) {
-      throw new BusinessError('Registration failed', 400);
+      if (userExists) {
+        throw new BusinessError('Registration failed', 400);
+      }
+
+      const hashedPassword = await SecurityHash.hashPassword(password);
+
+      const newUser = await UserRepository.create({
+        name,
+        email,
+        password: hashedPassword,
+      });
+
+      return mapToUserDTO(newUser);
+    } catch (error) {
+      logger.error('Register failed', { error, email: userData.email });
+      throw error;
     }
-
-    const hashedPassword = await SecurityHash.hashPassword(password);
-
-    const newUser = await UserRepository.create({
-      name,
-      email,
-      password: hashedPassword,
-    });
-
-    return mapToUserDTO(newUser);
   },
 
   login: async (email: string, password: string): Promise<{ user: UserDTO; accessToken: string; refreshToken: string }> => {

@@ -1,5 +1,6 @@
 import express from 'express';
 import type { Application, Request, Response, NextFunction } from 'express';
+import { asyncHandler } from './utils/async-handler.js';
 import cors from 'cors';
 import helmet from 'helmet'; 
 import { rateLimit } from 'express-rate-limit'; 
@@ -17,20 +18,22 @@ const app: Application = express();
 
 app.use(requestIdMiddleware);
 
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',')
+  : ['http://localhost:3000', 'http://localhost:*'];
+
 app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
+      connectSrc: ["'self'", ...allowedOrigins],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:"],
     },
   },
 }));
-
-const allowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',')
-  : ['http://localhost:3000', 'http://localhost:*'];
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -55,9 +58,12 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10kb' })); 
 
+const skipOptions = (req: Request) => req.method === 'OPTIONS';
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   limit: 100, 
+  skip: skipOptions,
   standardHeaders: 'draft-7', 
   legacyHeaders: false, 
   message: { error: 'Too many requests from this IP. Please try again in 15 minutes.' }
@@ -106,6 +112,10 @@ app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
   }
   const requestId = getRequestId();
   logger.error('Unhandled error in global middleware', error);
+  if (process.env.NODE_ENV === 'development') {
+    res.status(500).json({ error: 'Internal Server Error', requestId, detail: String(error) });
+    return;
+  }
   res.status(500).json({ error: 'Internal Server Error', requestId });
 });
 

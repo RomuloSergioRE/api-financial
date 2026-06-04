@@ -14,8 +14,10 @@ services:
         value: "true"
       - key: DB_SSL_REJECT_UNAUTHORIZED
         value: "true"
-      - key: JWT_EXPIRES_IN
+      - key: JWT_ACCESS_EXPIRES_IN
         value: 1d
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: "7"
       - key: DB_HOST
         fromDatabase:
           name: api-financial-db
