@@ -33,32 +33,39 @@ interface ImportResult {
   errors: Array<{ line: number; field: string; message: string }>;
 }
 
-async function resolveCategoryId(
-  userId: string,
-  categoryName: string,
-  categoryId: string
-): Promise<string | null> {
-  if (categoryId) return categoryId;
-  if (!categoryName) return null;
-
-  const category = await Category.findOne({
-    where: {
-      name: categoryName.trim(),
-      [Op.or]: [{ userId }, { userId: null }],
-    },
+async function preloadCategoryMap(userId: string): Promise<Map<string, string>> {
+  const categories = await Category.findAll({
+    where: { [Op.or]: [{ userId }, { userId: null }] },
+    attributes: ['id', 'name'],
+    raw: true,
   });
-  return category?.id ?? null;
+  return new Map((categories as Array<{ id: string; name: string }>).map(c => [c.name, c.id]));
 }
 
-async function resolveTagIds(userId: string, tagsStr: string): Promise<string[]> {
+async function preloadTagMap(userId: string): Promise<Map<string, string>> {
+  const tags = await Tag.findAll({
+    where: { userId },
+    attributes: ['id', 'name'],
+    raw: true,
+  });
+  return new Map((tags as Array<{ id: string; name: string }>).map(t => [t.name, t.id]));
+}
+
+function resolveCategoryIdSync(
+  categoryName: string,
+  categoryId: string,
+  categoryMap: Map<string, string>,
+): string | null {
+  if (categoryId) return categoryId;
+  if (!categoryName) return null;
+  return categoryMap.get(categoryName.trim()) ?? null;
+}
+
+function resolveTagIdsSync(tagsStr: string, tagMap: Map<string, string>): string[] {
   if (!tagsStr.trim()) return [];
   const names = tagsStr.split(',').map(n => n.trim()).filter(Boolean);
   if (names.length === 0) return [];
-
-  const tags = await Tag.findAll({
-    where: { name: { [Op.in]: names }, userId },
-  });
-  return tags.map(t => t.id);
+  return names.map(n => tagMap.get(n)).filter((id): id is string => id !== undefined);
 }
 
 export const ImportService = {
@@ -78,6 +85,11 @@ export const ImportService = {
       tagIds: string[];
     }> = [];
 
+    const [categoryMap, tagMap] = await Promise.all([
+      preloadCategoryMap(userId),
+      preloadTagMap(userId),
+    ]);
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i] as Record<string, string>;
       const lineNum = i + 2;
@@ -90,10 +102,10 @@ export const ImportService = {
         continue;
       }
 
-      const categoryId = await resolveCategoryId(
-        userId,
+      const categoryId = resolveCategoryIdSync(
         parsed.data.categoryName,
-        parsed.data.categoryId
+        parsed.data.categoryId,
+        categoryMap,
       );
       if (!categoryId) {
         const nameField = parsed.data.categoryName || parsed.data.categoryId;
@@ -105,7 +117,7 @@ export const ImportService = {
         continue;
       }
 
-      const tagIds = await resolveTagIds(userId, parsed.data.tags);
+      const tagIds = resolveTagIdsSync(parsed.data.tags, tagMap);
 
       validRows.push({
         data: {
@@ -210,6 +222,9 @@ export const ImportService = {
       tagIds: string[];
     }> = [];
 
+    const categoryCache = new Map<string, Map<string, string>>();
+    const tagCache = new Map<string, Map<string, string>>();
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i] as Record<string, string>;
       const lineNum = i + 2;
@@ -225,10 +240,24 @@ export const ImportService = {
         continue;
       }
 
-      const categoryId = await resolveCategoryId(
-        parsed.data.userId,
+      const rowUserId = parsed.data.userId;
+
+      let categoryMap = categoryCache.get(rowUserId);
+      if (!categoryMap) {
+        categoryMap = await preloadCategoryMap(rowUserId);
+        categoryCache.set(rowUserId, categoryMap);
+      }
+
+      let tagMap = tagCache.get(rowUserId);
+      if (!tagMap) {
+        tagMap = await preloadTagMap(rowUserId);
+        tagCache.set(rowUserId, tagMap);
+      }
+
+      const categoryId = resolveCategoryIdSync(
         parsed.data.categoryName,
-        parsed.data.categoryId
+        parsed.data.categoryId,
+        categoryMap,
       );
       if (!categoryId) {
         const nameField = parsed.data.categoryName || parsed.data.categoryId;
@@ -240,7 +269,7 @@ export const ImportService = {
         continue;
       }
 
-      const tagIds = await resolveTagIds(parsed.data.userId, parsed.data.tags);
+      const tagIds = resolveTagIdsSync(parsed.data.tags, tagMap);
 
       validRows.push({
         data: {

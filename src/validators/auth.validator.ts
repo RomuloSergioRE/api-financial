@@ -4,8 +4,8 @@ export const registerSchema = z.object({
   name: z.string().min(1).max(255).trim(),
   email: z.string().email().max(255).trim().toLowerCase(),
   password: z.string().min(8).max(128).regex(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-    'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]])/,
+    'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
   ),
 });
 
@@ -22,8 +22,8 @@ export const updateProfileSchema = z.object({
 export const updatePasswordSchema = z.object({
   currentPassword: z.string().min(1),
   newPassword: z.string().min(8).max(128).regex(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-    'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]])/,
+    'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
   ),
 });
 

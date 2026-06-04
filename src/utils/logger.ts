@@ -52,8 +52,9 @@ function log(level: string, message: string, meta?: Record<string, unknown>): vo
 
 export const logger = {
   error: (message: string, error?: unknown): void => {
+    const isProd = process.env.NODE_ENV === 'production';
     const errorMeta = error instanceof Error
-      ? { error: { message: error.message, stack: error.stack } }
+      ? { error: { message: error.message, ...(isProd ? {} : { stack: error.stack }) } }
       : error !== undefined
         ? { error }
         : undefined;
