@@ -44,7 +44,7 @@ Category.init(
       },
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',
-      field: 'userId',
+      field: 'user_id',
     },
     organizationId: {
       type: DataTypes.UUID,
