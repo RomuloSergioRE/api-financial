@@ -23,7 +23,8 @@ export const OrganizationService = {
     }
 
     const { organization } = await OrganizationRepository.create(userId, name);
-    const token = JwtUtil.generateTokenWithOrg(userId, userRole, organization.id);
+    const user = await UserRepository.findById(userId);
+    const token = JwtUtil.generateTokenWithOrg(userId, userRole, organization.id, user?.tokenVersion ?? 0);
 
     return { organization, token };
   },
@@ -49,7 +50,8 @@ export const OrganizationService = {
     const org = await OrganizationRepository.findById(orgId);
     if (!org) throw new BusinessError('Organization not found', 404);
 
-    const token = JwtUtil.generateTokenWithOrg(userId, userRole, orgId);
+    const user = await UserRepository.findById(userId);
+    const token = JwtUtil.generateTokenWithOrg(userId, userRole, orgId, user?.tokenVersion ?? 0);
 
     return { organization: org, token };
   },
@@ -168,6 +170,7 @@ export const OrganizationService = {
   },
 
   clearContext: async (userId: string, userRole: string): Promise<string> => {
-    return JwtUtil.generateTokenWithoutOrg(userId, userRole);
+    const user = await UserRepository.findById(userId);
+    return JwtUtil.generateTokenWithoutOrg(userId, userRole, user?.tokenVersion ?? 0);
   },
 };
