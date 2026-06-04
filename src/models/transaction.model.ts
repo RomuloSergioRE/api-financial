@@ -35,7 +35,7 @@ Transaction.init(
       },
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',
-      field: 'userId',
+      field: 'user_id',
     },
     categoryId: {
       type: DataTypes.UUID,
@@ -46,7 +46,7 @@ Transaction.init(
       },
       onUpdate: 'CASCADE',
       onDelete: 'RESTRICT',
-      field: 'categoryId', 
+      field: 'category_id', 
     },
     description: {
       type: DataTypes.STRING,

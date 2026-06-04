@@ -117,7 +117,7 @@ export const AnalyticsService = {
         attributes: ['name', 'color', 'icon'],
         required: false,
       }],
-      group: ['Transaction.categoryId', 'category.id'],
+      group: ['category_id', 'category.id'],
       raw: true,
       nest: false,
     });
@@ -249,7 +249,7 @@ export const AnalyticsService = {
         attributes: ['name'],
         required: false,
       }],
-      group: ['Transaction.categoryId', 'category.id'],
+      group: ['category_id', 'category.id'],
       order: [[literal('SUM(amount)'), 'DESC']],
       limit,
       raw: true,

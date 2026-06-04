@@ -15,7 +15,7 @@ const mapToUserDTO = (user: UserInterface): UserDTO => {
 };
 
 export const AuthService = {
-  register: async (userData: UserCreation): Promise<UserDTO> => {
+  register: async (userData: UserCreation): Promise<{ user: UserDTO; accessToken: string; refreshToken: string }> => {
     try {
       const { email, password, name } = userData;
 
@@ -33,7 +33,30 @@ export const AuthService = {
         password: hashedPassword,
       });
 
-      return mapToUserDTO(newUser);
+      const accessToken = JwtUtil.createAccessToken({
+        userId: newUser.id,
+        role: newUser.role,
+        status: newUser.status,
+        tokenVersion: newUser.tokenVersion,
+      });
+
+      const familyId = crypto.randomUUID();
+      const refreshTokenString = JwtUtil.createRefreshTokenString();
+      const tokenHash = crypto.createHash('sha256').update(refreshTokenString).digest('hex');
+      const expiresAt = JwtUtil.getRefreshExpiresAt();
+
+      await RefreshTokenRepository.create({
+        userId: newUser.id,
+        tokenHash,
+        familyId,
+        expiresAt,
+      });
+
+      return {
+        user: mapToUserDTO(newUser),
+        accessToken,
+        refreshToken: refreshTokenString,
+      };
     } catch (error) {
       logger.error('Register failed', { error, email: userData.email });
       throw error;
