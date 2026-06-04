@@ -1,6 +1,5 @@
 import type { Request, Response } from 'express';
 import { BudgetService } from '../services/budget.service.js';
-import { createBudgetSchema, updateBudgetSchema } from '../validators/budget.validator.js';
 import type { BudgetUpdateInput } from '../types/budget.types.js';
 
 export const BudgetController = {
@@ -9,8 +8,7 @@ export const BudgetController = {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
     }
-    const validated = createBudgetSchema.parse(req.body);
-    const budget = await BudgetService.create(req.user.id, validated, req.user.organizationId);
+    const budget = await BudgetService.create(req.user.id, req.body, req.user.organizationId);
     res.status(201).json(budget);
   },
 
@@ -44,9 +42,8 @@ export const BudgetController = {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
     }
-    const validated = updateBudgetSchema.parse(req.body) as BudgetUpdateInput;
     const id = req.params.id as string;
-    const updated = await BudgetService.update(id, req.user.id, validated, req.user.organizationId);
+    const updated = await BudgetService.update(id, req.user.id, req.body as BudgetUpdateInput, req.user.organizationId);
     res.status(200).json(updated);
   },
 

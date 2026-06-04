@@ -6,6 +6,7 @@ declare global {
         role: 'admin' | 'user' | 'company';
         organizationId?: string;
       };
+      validated?: unknown;
     }
   }
 }

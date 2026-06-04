@@ -1,8 +1,6 @@
 import type { Request, Response } from 'express';
 import { TransactionService } from '../services/transaction.service.js';
 import type { TransactionUpdateInput } from '../types/transaction.types.js';
-import { createTransactionSchema, updateTransactionSchema, transactionQuerySchema } from '../validators/transaction.validator.js';
-import { linkTagsSchema } from '../validators/tag.validator.js';
 import { ExportService } from '../services/export.service.js';
 import { ImportService } from '../services/import.service.js';
 import { setCsvHeaders } from '../utils/csv.util.js';
@@ -13,13 +11,15 @@ export const TransactionController = {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
     }
-    const validated = createTransactionSchema.parse(req.body);
+    const { categoryId, description, amount, type, date } = req.body as {
+      categoryId: string; description: string; amount: number; type: 'income' | 'outcome'; date?: string;
+    };
     const transactionData = {
-      categoryId: validated.categoryId,
-      description: validated.description,
-      amount: validated.amount,
-      type: validated.type,
-      date: validated.date ? new Date(validated.date) : new Date(),
+      categoryId,
+      description,
+      amount,
+      type,
+      date: date ? new Date(date) : new Date(),
     };
     const transaction = await TransactionService.create(req.user.id, transactionData, req.user.organizationId);
     res.status(201).json(transaction);
@@ -30,7 +30,10 @@ export const TransactionController = {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
     }
-    const parsed = transactionQuerySchema.parse(req.query);
+    const parsed = req.validated as {
+      page: number; limit: number; categoryId?: string; startDate?: string; endDate?: string;
+      search?: string; tags?: string;
+    };
     const offset = (parsed.page - 1) * parsed.limit;
     const tagIds = parsed.tags ? parsed.tags.split(',').filter(Boolean) : undefined;
 
@@ -63,8 +66,10 @@ export const TransactionController = {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
     }
-    const validated = updateTransactionSchema.parse(req.body);
     const id = req.params.id as string;
+    const validated = req.body as {
+      categoryId?: string; description?: string; amount?: number; type?: 'income' | 'outcome'; date?: string;
+    };
     const updateData: TransactionUpdateInput = {};
     if (validated.categoryId) updateData.categoryId = validated.categoryId;
     if (validated.description) updateData.description = validated.description;
@@ -156,7 +161,7 @@ export const TransactionController = {
       return;
     }
     const transactionId = req.params.id as string;
-    const { tagIds } = linkTagsSchema.parse(req.body);
+    const { tagIds } = req.body as { tagIds: string[] };
     await TransactionService.linkTags(transactionId, req.user.id, tagIds, req.user.organizationId);
     const transaction = await TransactionService.findByIdAndUser(transactionId, req.user.id, req.user.organizationId);
     res.status(200).json(transaction);

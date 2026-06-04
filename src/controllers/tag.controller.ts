@@ -1,6 +1,5 @@
 import type { Request, Response } from 'express';
 import { TagService } from '../services/tag.service.js';
-import { createTagSchema, updateTagSchema } from '../validators/tag.validator.js';
 
 export const TagController = {
   create: async (req: Request, res: Response): Promise<void> => {
@@ -8,10 +7,10 @@ export const TagController = {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
     }
-    const validated = createTagSchema.parse(req.body);
+    const { name, color } = req.body as { name: string; color?: string | null };
     const tag = await TagService.create(req.user.id, {
-      name: validated.name,
-      color: validated.color ?? null,
+      name,
+      color: color ?? null,
     }, req.user.organizationId);
     res.status(201).json(tag);
   },
@@ -44,8 +43,8 @@ export const TagController = {
       res.status(401).json({ error: 'Unauthorized: User missing' });
       return;
     }
-    const validated = updateTagSchema.parse(req.body);
     const id = req.params.id as string;
+    const validated = req.body as { name?: string; color?: string | null };
     const updateData: { name?: string; color?: string | null } = {};
     if (validated.name) updateData.name = validated.name;
     if (validated.color !== undefined) updateData.color = validated.color ?? null;

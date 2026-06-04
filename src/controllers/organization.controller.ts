@@ -1,17 +1,9 @@
 import type { Request, Response } from 'express';
 import { OrganizationService } from '../services/organization.service.js';
-import {
-  createOrganizationSchema,
-  updateOrganizationSchema,
-  inviteMemberSchema,
-  updateMemberRoleSchema,
-  acceptInviteSchema,
-  fiscalReportQuerySchema,
-} from '../validators/organization.validator.js';
 
 export const OrganizationController = {
   create: async (req: Request, res: Response): Promise<void> => {
-    const { name } = createOrganizationSchema.parse(req.body);
+    const { name } = req.body as { name: string };
     const { organization, token } = await OrganizationService.create(req.user!.id, req.user!.role, name);
     res.status(201).json({ organization, token });
   },
@@ -29,7 +21,7 @@ export const OrganizationController = {
 
   update: async (req: Request, res: Response): Promise<void> => {
     const orgId = req.params.id as string;
-    const { name } = updateOrganizationSchema.parse(req.body);
+    const { name } = req.body as { name: string };
     const org = await OrganizationService.update(orgId, req.user!.id, { name });
     res.status(200).json(org);
   },
@@ -59,14 +51,13 @@ export const OrganizationController = {
 
   inviteMember: async (req: Request, res: Response): Promise<void> => {
     const orgId = req.params.id as string;
-    const { email, role } = inviteMemberSchema.parse(req.body);
+    const { email, role } = req.body as { email: string; role: 'admin' | 'finance' | 'viewer' };
     const result = await OrganizationService.inviteMember(orgId, req.user!.id, email, role);
     res.status(201).json(result);
   },
 
   acceptInvite: async (req: Request, res: Response): Promise<void> => {
     const orgId = req.params.id as string;
-    acceptInviteSchema.parse(req.body);
     const result = await OrganizationService.acceptInvite(orgId, req.user!.id);
     res.status(200).json(result);
   },
@@ -74,7 +65,7 @@ export const OrganizationController = {
   updateMemberRole: async (req: Request, res: Response): Promise<void> => {
     const orgId = req.params.id as string;
     const targetUserId = req.params.memberId as string;
-    const { role } = updateMemberRoleSchema.parse(req.body);
+    const { role } = req.body as { role: 'admin' | 'finance' | 'viewer' };
     const result = await OrganizationService.updateMemberRole(orgId, req.user!.id, targetUserId, role);
     res.status(200).json(result);
   },
@@ -88,7 +79,7 @@ export const OrganizationController = {
 
   getFiscalReport: async (req: Request, res: Response): Promise<void> => {
     const orgId = req.params.id as string;
-    const { year } = fiscalReportQuerySchema.parse(req.query);
+    const { year } = req.validated as { year: number };
     const report = await OrganizationService.getFiscalReport(orgId, req.user!.id, year);
     res.status(200).json(report);
   },
