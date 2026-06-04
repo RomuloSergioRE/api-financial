@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { asyncHandler } from '../utils/async-handler.js';
 import { AdminService } from '../services/admin.service.js';
 import type { CategoryUpdateInput } from '../types/category.types.js';
 import { ExportService } from '../services/export.service.js';
@@ -6,7 +7,7 @@ import { ImportService } from '../services/import.service.js';
 import { setCsvHeaders } from '../utils/csv.util.js';
 
 export const AdminController = {
-  listUsers: async (req: Request, res: Response): Promise<void> => {
+  listUsers: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { page, limit, role, status, search } = req.validated as { page: number; limit: number; role?: string; status?: string; search?: string };
     const offset = (page - 1) * limit;
     const filters: { role?: string; status?: string; search?: string } = {};
@@ -18,9 +19,9 @@ export const AdminController = {
       data: rows,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
-  },
+  }),
 
-  getUserDetails: async (req: Request, res: Response): Promise<void> => {
+  getUserDetails: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const targetId = req.params.id as string;
     const details = await AdminService.getUserDetails(targetId);
     if (!details) {
@@ -28,34 +29,34 @@ export const AdminController = {
       return;
     }
     res.status(200).json(details);
-  },
+  }),
 
-  updateUserStatus: async (req: Request, res: Response): Promise<void> => {
+  updateUserStatus: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const targetId = req.params.id as string;
     const { status } = req.body as { status: string };
     const updated = await AdminService.updateUserStatus(targetId, status as 'active' | 'inactive' | 'suspended', req.user!.id);
     res.status(200).json(updated);
-  },
+  }),
 
-  updateUserRole: async (req: Request, res: Response): Promise<void> => {
+  updateUserRole: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const targetId = req.params.id as string;
     const { role } = req.body as { role: string };
     const updated = await AdminService.updateUserRole(targetId, role as 'admin' | 'user' | 'company', req.user!.id);
     res.status(200).json(updated);
-  },
+  }),
 
-  deleteUser: async (req: Request, res: Response): Promise<void> => {
+  deleteUser: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const targetId = req.params.id as string;
     await AdminService.deleteUser(targetId, req.user!.id);
     res.status(204).send();
-  },
+  }),
 
-  createGlobalCategory: async (req: Request, res: Response): Promise<void> => {
+  createGlobalCategory: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const category = await AdminService.createGlobalCategory(req.body);
     res.status(201).json(category);
-  },
+  }),
 
-  updateGlobalCategory: async (req: Request, res: Response): Promise<void> => {
+  updateGlobalCategory: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const id = req.params.id as string;
     const updateData: CategoryUpdateInput = {};
     const validated = req.body as { name?: string; icon?: string; color?: string };
@@ -68,20 +69,20 @@ export const AdminController = {
       return;
     }
     res.status(200).json(updated);
-  },
+  }),
 
-  deleteGlobalCategory: async (req: Request, res: Response): Promise<void> => {
+  deleteGlobalCategory: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const id = req.params.id as string;
     await AdminService.deleteGlobalCategory(id);
     res.status(204).send();
-  },
+  }),
 
-  getOverview: async (req: Request, res: Response): Promise<void> => {
+  getOverview: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const overview = await AdminService.getOverview();
     res.status(200).json(overview);
-  },
+  }),
 
-  getUserAnalytics: async (req: Request, res: Response): Promise<void> => {
+  getUserAnalytics: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const targetId = req.params.id as string;
     const analytics = await AdminService.getUserAnalytics(targetId);
     if (!analytics) {
@@ -89,15 +90,15 @@ export const AdminController = {
       return;
     }
     res.status(200).json(analytics);
-  },
+  }),
 
-  exportUsersCSV: async (req: Request, res: Response): Promise<void> => {
+  exportUsersCSV: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { content, filename } = await ExportService.exportUsersCSV();
     setCsvHeaders(res, filename);
     res.status(200).send(content);
-  },
+  }),
 
-  exportAllTransactionsCSV: async (req: Request, res: Response): Promise<void> => {
+  exportAllTransactionsCSV: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { content, filename } = await ExportService.exportAllTransactionsCSV({
       userId: req.query.userId as string | undefined,
       startDate: req.query.startDate as string | undefined,
@@ -105,15 +106,15 @@ export const AdminController = {
     });
     setCsvHeaders(res, filename);
     res.status(200).send(content);
-  },
+  }),
 
-  exportAuditLogsCSV: async (req: Request, res: Response): Promise<void> => {
+  exportAuditLogsCSV: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { content, filename } = await ExportService.exportAuditLogsCSV();
     setCsvHeaders(res, filename);
     res.status(200).send(content);
-  },
+  }),
 
-  importTransactionsCSV: async (req: Request, res: Response): Promise<void> => {
+  importTransactionsCSV: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const file = req.file;
     if (!file) {
       res.status(400).json({ error: 'No file uploaded. Send a CSV file in the "file" field.' });
@@ -125,14 +126,14 @@ export const AdminController = {
       return;
     }
     res.status(result.errors.length > 0 ? 207 : 200).json(result);
-  },
+  }),
 
-  listGlobalCategories: async (req: Request, res: Response): Promise<void> => {
+  listGlobalCategories: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const categories = await AdminService.listGlobalCategories();
     res.status(200).json(categories);
-  },
+  }),
 
-  listAuditLogs: async (req: Request, res: Response): Promise<void> => {
+  listAuditLogs: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { page, limit, adminId, action, targetType, startDate, endDate } = req.validated as { page: number; limit: number; adminId?: string; action?: string; targetType?: string; startDate?: string; endDate?: string };
     const offset = (page - 1) * limit;
     const filters: { adminId?: string; action?: string; targetType?: string; startDate?: string; endDate?: string } = {};
@@ -146,16 +147,16 @@ export const AdminController = {
       data: rows,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
-  },
+  }),
 
-  getUserGrowth: async (req: Request, res: Response): Promise<void> => {
+  getUserGrowth: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { startDate, endDate, granularity } = req.validated as { startDate: string; endDate: string; granularity: 'day' | 'month' };
     const data = await AdminService.getUserGrowth(startDate, endDate, granularity);
     res.status(200).json(data);
-  },
+  }),
 
-  getPerformance: async (req: Request, res: Response): Promise<void> => {
+  getPerformance: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const data = await AdminService.getPerformance();
     res.status(200).json(data);
-  },
+  }),
 };

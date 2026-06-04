@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { asyncHandler } from '../utils/async-handler.js';
 import { CategoryService } from '../services/category.service.js';
 import type { CategoryUpdateInput } from '../types/category.types.js';
 import { ExportService } from '../services/export.service.js';
@@ -6,7 +7,7 @@ import { ImportService } from '../services/import.service.js';
 import { setCsvHeaders } from '../utils/csv.util.js';
 
 export const CategoryController = {
-    create: async (req: Request, res: Response): Promise<void> => {
+    create: asyncHandler(async (req: Request, res: Response): Promise<void> => {
         if (!req.user?.id) {
           res.status(401).json({ error: 'Unauthorized: User missing' });
           return;
@@ -18,9 +19,9 @@ export const CategoryController = {
           color: color ?? null,
         }, req.user.organizationId);
         res.status(201).json(category);
-    },
+    }),
 
-    getAll: async (req: Request, res: Response): Promise<void> => {
+    getAll: asyncHandler(async (req: Request, res: Response): Promise<void> => {
         if (!req.user?.id) {
           res.status(401).json({ error: 'Unauthorized: User missing' });
           return;
@@ -34,9 +35,9 @@ export const CategoryController = {
             data: rows,
             pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
         });
-    },
+    }),
 
-    getById: async (req: Request, res: Response): Promise<void> => {
+    getById: asyncHandler(async (req: Request, res: Response): Promise<void> => {
         if (!req.user?.id) {
           res.status(401).json({ error: 'Unauthorized: User missing' });
           return;
@@ -48,9 +49,9 @@ export const CategoryController = {
           return;
         }
         res.status(200).json(category);
-    },
+    }),
 
-    update: async (req: Request, res: Response): Promise<void> => {
+    update: asyncHandler(async (req: Request, res: Response): Promise<void> => {
         if (!req.user?.id) {
           res.status(401).json({ error: 'Unauthorized: User missing' });
           return;
@@ -63,9 +64,9 @@ export const CategoryController = {
         if (validated.color !== undefined) updateData.color = validated.color ?? null;
         const updated = await CategoryService.update(id, req.user.id, updateData, req.user.organizationId);
         res.status(200).json(updated);
-    },
+    }),
 
-    delete: async (req: Request, res: Response): Promise<void> => {
+    delete: asyncHandler(async (req: Request, res: Response): Promise<void> => {
         if (!req.user?.id) {
           res.status(401).json({ error: 'Unauthorized: User missing' });
           return;
@@ -73,9 +74,9 @@ export const CategoryController = {
         const id = req.params.id as string;
         await CategoryService.delete(id, req.user.id, req.user.organizationId);
         res.status(204).send();
-    },
+    }),
 
-    exportCSV: async (req: Request, res: Response): Promise<void> => {
+    exportCSV: asyncHandler(async (req: Request, res: Response): Promise<void> => {
         if (!req.user?.id) {
           res.status(401).json({ error: 'Unauthorized: User missing' });
           return;
@@ -83,9 +84,9 @@ export const CategoryController = {
         const { content, filename } = await ExportService.exportCategoriesCSV(req.user.id, req.user.organizationId);
         setCsvHeaders(res, filename);
         res.status(200).send(content);
-    },
+    }),
 
-    importCSV: async (req: Request, res: Response): Promise<void> => {
+    importCSV: asyncHandler(async (req: Request, res: Response): Promise<void> => {
         if (!req.user?.id) {
           res.status(401).json({ error: 'Unauthorized: User missing' });
           return;
@@ -101,9 +102,9 @@ export const CategoryController = {
           return;
         }
         res.status(result.errors.length > 0 ? 207 : 200).json(result);
-    },
+    }),
 
-    exportPDF: async (req: Request, res: Response): Promise<void> => {
+    exportPDF: asyncHandler(async (req: Request, res: Response): Promise<void> => {
         if (!req.user?.id) {
           res.status(401).json({ error: 'Unauthorized: User missing' });
           return;
@@ -114,5 +115,5 @@ export const CategoryController = {
             .set('Content-Disposition', `inline; filename="${filename}"`)
             .status(200)
             .send(buffer);
-    }
+    }),
 };
