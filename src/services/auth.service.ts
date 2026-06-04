@@ -50,6 +50,8 @@ export const AuthService = {
       throw new BusinessError('Account is inactive or suspended.', 401);
     }
 
+    await RefreshTokenRepository.deleteByUserId(user.id);
+
     const accessToken = JwtUtil.createAccessToken({
       userId: user.id,
       role: user.role,
