@@ -4,14 +4,12 @@ import { BudgetRepository } from '../repositories/budget.repository.js';
 import Budget from '../models/budget.model.js';
 import Transaction from '../models/transaction.model.js';
 import Category from '../models/category.model.js';
-import { resolveOrgMemberIds } from '../utils/org-resolver.js';
+import { resolveOrgContext } from '../utils/org-resolver.js';
 import type { BudgetInterface, BudgetCreateInput, BudgetUpdateInput, BudgetDTO } from '../types/budget.types.js';
+import type { OrgContext } from '../types/organization.types.js';
 import { BusinessError } from '../utils/errors.js';
 
-interface OrgContext {
-  memberIds: string[];
-  orgId: string;
-}
+type WithCategoryName = { category?: { name: string } };
 
 const mapToBudgetDTO = (budget: BudgetInterface, categoryName = 'Unknown'): BudgetDTO => {
   const percentage = budget.limit > 0 ? Math.round((budget.spent / budget.limit) * 100) : 0;
@@ -38,20 +36,20 @@ export const BudgetService = {
   },
 
   findByUser: async (userId: string, month?: number, year?: number, orgId?: string): Promise<BudgetDTO[]> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
     const budgets = await BudgetRepository.findByUser(userId, month, year, orgContext);
-    return budgets.map(b => mapToBudgetDTO(b, (b as unknown as { category?: { name: string } }).category?.name ?? 'Unknown'));
+    return budgets.map(b => mapToBudgetDTO(b, (b as unknown as WithCategoryName).category?.name ?? 'Unknown'));
   },
 
   findByIdAndUser: async (id: string, userId: string, orgId?: string): Promise<BudgetDTO | null> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
     const budget = await BudgetRepository.findByIdAndUser(id, userId, orgContext);
     if (!budget) return null;
-    return mapToBudgetDTO(budget, (budget as unknown as { category?: { name: string } }).category?.name ?? 'Unknown');
+    return mapToBudgetDTO(budget, (budget as unknown as WithCategoryName).category?.name ?? 'Unknown');
   },
 
   update: async (id: string, userId: string, data: BudgetUpdateInput, orgId?: string): Promise<BudgetDTO> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
     const updated = await BudgetRepository.update(id, userId, data, orgContext);
     if (!updated) {
       throw new BusinessError('Budget not found', 404);
@@ -60,32 +58,16 @@ export const BudgetService = {
   },
 
   delete: async (id: string, userId: string, orgId?: string): Promise<void> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
     const success = await BudgetRepository.delete(id, userId, orgContext);
     if (!success) {
       throw new BusinessError('Budget not found', 404);
     }
   },
 
-  recalcSpent: async (userId: string, categoryId: string, date: Date, orgContext?: OrgContext): Promise<void> => {
+  recalcSpent: async (userId: string, categoryId: string, date: Date, orgContext?: OrgContext, delta?: number): Promise<void> => {
     const month = date.getMonth() + 1;
     const year = date.getFullYear();
-
-    const txWhere: Record<string, unknown> = {
-      categoryId,
-      type: 'outcome',
-      date: {
-        [Op.gte]: new Date(year, month - 1, 1),
-        [Op.lt]: new Date(year, month, 1),
-      },
-    };
-
-    if (orgContext) {
-      txWhere.userId = { [Op.in]: orgContext.memberIds };
-      txWhere.organizationId = orgContext.orgId;
-    } else {
-      txWhere.userId = userId;
-    }
 
     const budgetWhere: Record<string, unknown> = { categoryId, month, year };
     if (orgContext) {
@@ -95,9 +77,25 @@ export const BudgetService = {
       budgetWhere.userId = userId;
     }
 
+    if (delta !== undefined) {
+      await Budget.increment('spent', { by: delta, where: budgetWhere });
+      return;
+    }
+
     await sequelize.transaction(async (t) => {
       const result = await Transaction.findAll({
-        where: txWhere,
+        where: {
+          categoryId,
+          type: 'outcome',
+          date: {
+            [Op.gte]: new Date(year, month - 1, 1),
+            [Op.lt]: new Date(year, month, 1),
+          },
+          ...(orgContext
+            ? { userId: { [Op.in]: orgContext.memberIds }, organizationId: orgContext.orgId }
+            : { userId }
+          ),
+        },
         attributes: [[fn('COALESCE', fn('SUM', col('amount')), 0), 'total']],
         raw: true,
         transaction: t,

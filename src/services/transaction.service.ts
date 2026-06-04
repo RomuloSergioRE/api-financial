@@ -2,16 +2,12 @@ import { Op } from 'sequelize';
 import sequelize from '../config/db.js';
 import { TransactionRepository } from '../repositories/transaction.repository.js';
 import type { TransactionCreateInput, TransactionUpdateInput, TransactionDTO, TransactionInterface } from '../types/transaction.types.js';
+import type { OrgContext } from '../types/organization.types.js';
 import { BusinessError } from '../utils/errors.js';
-import { resolveOrgMemberIds } from '../utils/org-resolver.js';
+import { resolveOrgContext } from '../utils/org-resolver.js';
 import { BudgetService } from './budget.service.js';
 import { GoalService } from './goal.service.js';
 import { Tag, TransactionTag } from '../models/index.js';
-
-interface OrgContext {
-  memberIds: string[];
-  orgId: string;
-}
 
 const mapToTransactionDTO = (transaction: TransactionInterface): TransactionDTO => {
   const { deletedAt, ...transactionDto } = transaction;
@@ -25,11 +21,9 @@ export const TransactionService = {
   create: async (userId: string, data: TransactionCreateInput, orgId?: string | null): Promise<TransactionDTO> => {
     const transaction = await TransactionRepository.create(userId, data, orgId);
     if (data.type === 'outcome' && data.categoryId) {
-      const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
-      await sequelize.transaction(async (t) => {
-        await BudgetService.recalcSpent(userId, data.categoryId, data.date, orgContext);
-        await GoalService.recalcCurrentAmount(userId, data.categoryId, orgContext);
-      });
+      const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
+      await BudgetService.recalcSpent(userId, data.categoryId, data.date, orgContext, transaction.amount);
+      await GoalService.recalcCurrentAmount(userId, data.categoryId, orgContext);
     }
     return mapToTransactionDTO(transaction);
   },
@@ -44,7 +38,7 @@ export const TransactionService = {
     tagIds?: string[],
     orgId?: string
   ): Promise<{ rows: TransactionDTO[]; total: number }> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
     const { rows, total } = await TransactionRepository.findByUser(
       userId, pagination, categoryId, startDate, endDate, search, tagIds, orgContext
     );
@@ -52,13 +46,13 @@ export const TransactionService = {
   },
 
   findByIdAndUser: async (id: string, userId: string, orgId?: string): Promise<TransactionDTO | null> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
     const transaction = await TransactionRepository.findByIdAndUser(id, userId, orgContext);
     return transaction ? mapToTransactionDTO(transaction) : null;
   },
 
   update: async (id: string, userId: string, data: TransactionUpdateInput, orgId?: string): Promise<TransactionDTO> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
 
     return sequelize.transaction(async (t) => {
       const old = await TransactionRepository.findByIdAndUser(id, userId, orgContext);
@@ -71,13 +65,19 @@ export const TransactionService = {
         throw new BusinessError('Transaction not found or unauthorized', 404);
       }
 
-      await BudgetService.recalcSpent(userId, old.categoryId, old.date, orgContext);
+      const bucketChanged = data.categoryId !== undefined || data.date !== undefined;
+
+      const oldBucketDelta = bucketChanged
+        ? (old.type === 'outcome' ? -old.amount : 0)
+        : ((updated.type === 'outcome' ? updated.amount : 0) - (old.type === 'outcome' ? old.amount : 0));
+
+      await BudgetService.recalcSpent(userId, old.categoryId, old.date, orgContext, oldBucketDelta);
       await GoalService.recalcCurrentAmount(userId, old.categoryId, orgContext);
 
-      if (updated.type === 'outcome' && (data.categoryId || data.date)) {
+      if (bucketChanged && updated.type === 'outcome') {
         const recalcCategoryId = data.categoryId ?? old.categoryId;
         const recalcDate = data.date ?? old.date;
-        await BudgetService.recalcSpent(userId, recalcCategoryId, recalcDate, orgContext);
+        await BudgetService.recalcSpent(userId, recalcCategoryId, recalcDate, orgContext, updated.amount);
       }
       if (updated.type === 'outcome' && data.categoryId) {
         await GoalService.recalcCurrentAmount(userId, data.categoryId, orgContext);
@@ -88,7 +88,7 @@ export const TransactionService = {
   },
 
   delete: async (id: string, userId: string, orgId?: string): Promise<void> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
 
     return sequelize.transaction(async (t) => {
       const old = await TransactionRepository.findByIdAndUser(id, userId, orgContext);
@@ -101,13 +101,13 @@ export const TransactionService = {
         throw new BusinessError('Transaction not found or unauthorized', 404);
       }
 
-      await BudgetService.recalcSpent(userId, old.categoryId, old.date, orgContext);
+      await BudgetService.recalcSpent(userId, old.categoryId, old.date, orgContext, old.type === 'outcome' ? -old.amount : 0);
       await GoalService.recalcCurrentAmount(userId, old.categoryId, orgContext);
     });
   },
 
   linkTags: async (transactionId: string, userId: string, tagIds: string[], orgId?: string): Promise<void> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
     const transaction = await TransactionRepository.findByIdAndUser(transactionId, userId, orgContext);
     if (!transaction) {
       throw new BusinessError('Transaction not found or unauthorized', 404);
@@ -139,7 +139,7 @@ export const TransactionService = {
   },
 
   unlinkTag: async (transactionId: string, userId: string, tagId: string, orgId?: string): Promise<void> => {
-    const orgContext = orgId ? { memberIds: await resolveOrgMemberIds(orgId), orgId } : undefined;
+    const orgContext = orgId ? await resolveOrgContext(orgId) : undefined;
     const transaction = await TransactionRepository.findByIdAndUser(transactionId, userId, orgContext);
     if (!transaction) {
       throw new BusinessError('Transaction not found or unauthorized', 404);

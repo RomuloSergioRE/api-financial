@@ -1,11 +1,7 @@
 import { Op } from 'sequelize';
 import { Tag } from '../models/index.js';
 import type { TagInterface, TagCreateInput, TagUpdateInput } from '../types/tag.types.js';
-
-interface OrgContext {
-  memberIds: string[];
-  orgId: string;
-}
+import type { OrgContext } from '../types/organization.types.js';
 
 export const TagRepository = {
   create: async (userId: string, data: TagCreateInput, orgId?: string | null): Promise<TagInterface> => {

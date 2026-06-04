@@ -1,11 +1,7 @@
 import { Op } from 'sequelize';
 import RecurringRule from '../models/recurring-rule.model.js';
 import type { RecurringRuleInterface, RecurringRuleCreateInput, RecurringRuleUpdateInput } from '../types/recurring-rule.types.js';
-
-interface OrgContext {
-  memberIds: string[];
-  orgId: string;
-}
+import type { OrgContext } from '../types/organization.types.js';
 
 export const RecurringRuleRepository = {
   create: async (userId: string, data: RecurringRuleCreateInput, orgId?: string | null): Promise<RecurringRuleInterface> => {

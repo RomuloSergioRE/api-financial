@@ -2,11 +2,7 @@ import { Op } from 'sequelize';
 import Budget from '../models/budget.model.js';
 import Category from '../models/category.model.js';
 import type { BudgetInterface, BudgetCreateInput, BudgetUpdateInput } from '../types/budget.types.js';
-
-interface OrgContext {
-  memberIds: string[];
-  orgId: string;
-}
+import type { OrgContext } from '../types/organization.types.js';
 
 export const BudgetRepository = {
   create: async (userId: string, data: BudgetCreateInput, orgId?: string | null): Promise<BudgetInterface> => {

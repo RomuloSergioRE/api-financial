@@ -2,11 +2,7 @@ import { Op } from 'sequelize';
 import { Transaction, Category, Tag } from '../models/index.js';
 import type { TransactionInterface, TransactionCreateInput, TransactionUpdateInput } from '../types/transaction.types.js';
 import type { TagDTO } from '../types/tag.types.js';
-
-interface OrgContext {
-  memberIds: string[];
-  orgId: string;
-}
+import type { OrgContext } from '../types/organization.types.js';
 
 export const TransactionRepository = {
   create: async (userId: string, data: TransactionCreateInput, orgId?: string | null): Promise<TransactionInterface> => {

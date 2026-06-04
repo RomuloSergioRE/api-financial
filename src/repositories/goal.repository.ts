@@ -2,11 +2,7 @@ import { Op } from 'sequelize';
 import Goal from '../models/goal.model.js';
 import Category from '../models/category.model.js';
 import type { GoalInterface, GoalCreateInput, GoalUpdateInput } from '../types/goal.types.js';
-
-interface OrgContext {
-  memberIds: string[];
-  orgId: string;
-}
+import type { OrgContext } from '../types/organization.types.js';
 
 export const GoalRepository = {
   create: async (userId: string, data: GoalCreateInput, orgId?: string | null): Promise<GoalInterface> => {

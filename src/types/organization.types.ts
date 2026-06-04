@@ -1,6 +1,11 @@
 export type OrgMemberRole = 'admin' | 'finance' | 'viewer';
 export type OrgMemberStatus = 'active' | 'pending';
 
+export interface OrgContext {
+  memberIds: string[];
+  orgId: string;
+}
+
 export interface OrganizationInterface {
   id: string;
   name: string;
