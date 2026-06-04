@@ -1,17 +1,16 @@
-const store = new Map<string, { data: unknown; expiresAt: number }>();
+import { LRUCache } from 'lru-cache';
 
-export function getCached<T>(key: string): T | null {
+const store = new LRUCache<string, object>({
+  max: 500,
+});
+
+export function getCached<T extends object>(key: string): T | null {
   const entry = store.get(key);
-  if (!entry) return null;
-  if (Date.now() > entry.expiresAt) {
-    store.delete(key);
-    return null;
-  }
-  return entry.data as T;
+  return entry !== undefined ? (entry as T) : null;
 }
 
-export function setCache<T>(key: string, data: T, ttlMs: number): void {
-  store.set(key, { data, expiresAt: Date.now() + ttlMs });
+export function setCache<T extends object>(key: string, data: T, ttlMs: number): void {
+  store.set(key, data, { ttl: ttlMs });
 }
 
 export function clearCache(pattern?: string): void {
