@@ -29,7 +29,7 @@ router.patch('/select-none', OrganizationController.selectNone);
 // Members
 router.get('/:id/members', OrganizationController.listMembers);
 router.post('/:id/members', validate(inviteMemberSchema), OrganizationController.inviteMember);
-router.patch('/:id/members/:memberId/accept', validate(acceptInviteSchema), OrganizationController.acceptInvite);
+router.patch('/:id/accept', validate(acceptInviteSchema), OrganizationController.acceptInvite);
 router.put('/:id/members/:memberId/role', validate(updateMemberRoleSchema), OrganizationController.updateMemberRole);
 router.delete('/:id/members/:memberId', OrganizationController.removeMember);
 
