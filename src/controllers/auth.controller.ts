@@ -11,7 +11,7 @@ const COOKIE_OPTIONS = {
 
 const REFRESH_COOKIE_OPTIONS = {
   ...COOKIE_OPTIONS,
-  path: '/api/auth',
+  path: '/auth',
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
@@ -22,7 +22,7 @@ function setAuthCookies(res: Response, accessToken: string, refreshToken: string
 
 function clearAuthCookies(res: Response) {
   res.clearCookie('accessToken', COOKIE_OPTIONS);
-  res.clearCookie('refreshToken', { ...COOKIE_OPTIONS, path: '/api/auth' });
+  res.clearCookie('refreshToken', { ...COOKIE_OPTIONS, path: '/auth' });
 }
 
 export const AuthController = {
