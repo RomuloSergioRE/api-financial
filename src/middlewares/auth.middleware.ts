@@ -4,17 +4,22 @@ import { UserRepository } from '../repositories/user.repository.js';
 import { logger } from '../utils/logger.js';
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const authHeader = req.headers.authorization;
+  let token: string | undefined;
 
-  if (!authHeader) {
-    res.status(401).json({ error: 'Access denied. No token provided.' });
-    return;
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const [scheme, tokenValue] = authHeader.split(' ');
+    if (scheme === 'Bearer' && tokenValue) {
+      token = tokenValue;
+    }
   }
 
-  const [scheme, token] = authHeader.split(' ');
+  if (!token) {
+    token = req.cookies?.accessToken;
+  }
 
-  if (scheme !== 'Bearer' || !token) {
-    res.status(401).json({ error: 'Token malformatted.' });
+  if (!token) {
+    res.status(401).json({ error: 'Access denied. No token provided.' });
     return;
   }
 

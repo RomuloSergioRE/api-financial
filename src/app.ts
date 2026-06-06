@@ -13,10 +13,12 @@ import { z } from 'zod';
 import { BusinessError } from './utils/errors.js';
 import { logger, getRequestId } from './utils/logger.js';
 import sequelize from './config/db.js';
+import cookieParser from 'cookie-parser';
 
 const app: Application = express();
 
 app.use(requestIdMiddleware);
+app.use(cookieParser());
 
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',')
