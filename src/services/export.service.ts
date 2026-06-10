@@ -287,7 +287,7 @@ export const ExportService = {
           required: false,
         },
       ],
-      group: ['Transaction.categoryId', 'category.id'],
+      group: ['Transaction.category_id', 'category.id'],
       raw: true,
       nest: true,
     });
@@ -653,7 +653,7 @@ export const ExportService = {
       include: [
         { model: Category, as: 'category', attributes: ['name'], required: false },
       ],
-      group: ['Transaction.categoryId', 'category.id'],
+      group: ['Transaction.category_id', 'category.id'],
       raw: true,
       nest: true,
     });
