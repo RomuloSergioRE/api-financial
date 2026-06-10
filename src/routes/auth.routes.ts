@@ -55,6 +55,6 @@ authRouter.get('/me', authMiddleware, AuthController.me);
 authRouter.put('/profile', authMiddleware, validate(updateProfileSchema), AuthController.updateProfile);
 authRouter.put('/password', authMiddleware, passwordLimiter, validate(updatePasswordSchema), AuthController.updatePassword);
 
-authRouter.post('/logout', authMiddleware, logoutLimiter, validate(logoutSchema), AuthController.logout);
+authRouter.post('/logout', authMiddleware, logoutLimiter, AuthController.logout);
 
 export default authRouter;
