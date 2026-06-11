@@ -11,6 +11,7 @@ export interface UserInterface {
     role: Role;
     status: Status;
     tokenVersion: number;
+    avatarUrl?: string | null;
     createdAt: Date;
     updatedAt: Date;
     deletedAt?: Date | null;

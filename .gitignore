@@ -4,3 +4,6 @@ dist/
 .env.local
 *.log
 .opencode/
+uploads/*
+!uploads/.gitkeep
+!uploads/avatars/.gitkeep

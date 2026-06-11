@@ -1,5 +1,8 @@
 import express from 'express';
 import type { Application, Request, Response, NextFunction } from 'express';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { asyncHandler } from './utils/async-handler.js';
 import cors from 'cors';
 import helmet from 'helmet'; 
@@ -14,6 +17,14 @@ import { BusinessError } from './utils/errors.js';
 import { logger, getRequestId } from './utils/logger.js';
 import sequelize from './config/db.js';
 import cookieParser from 'cookie-parser';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 const app: Application = express();
 
@@ -79,6 +90,8 @@ const swaggerDoc = getSwaggerDocument(renderUrl);
 if (process.env.NODE_ENV !== 'production') {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 }
+
+app.use('/uploads', express.static(uploadsDir));
 
 app.get('/health', async (req: Request, res: Response) => {
   try {

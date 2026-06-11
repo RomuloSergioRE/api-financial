@@ -14,6 +14,7 @@ class User extends Model<Omit<UserInterface, SequelizeTimestamps>, UserCreation>
   declare role: Role;
   declare status: Status;
   declare tokenVersion: number;
+  declare avatarUrl: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
   declare readonly deletedAt: Date | null; 
@@ -51,6 +52,10 @@ User.init(
       type: DataTypes.INTEGER,
       defaultValue: 0,
       allowNull: false,
+    },
+    avatarUrl: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
   },
   {
