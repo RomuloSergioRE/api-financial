@@ -17,7 +17,7 @@ const mapToUserDTO = (user: UserInterface): UserDTO => {
 export const AuthService = {
   register: async (userData: UserCreation): Promise<{ user: UserDTO; accessToken: string; refreshToken: string }> => {
     try {
-      const { email, password, name } = userData;
+      const { email, password, name, role } = userData;
 
       const userExists = await UserRepository.findByEmailWithDeleted(email);
 
@@ -31,6 +31,7 @@ export const AuthService = {
         name,
         email,
         password: hashedPassword,
+        ...(role && { role }),
       });
 
       const accessToken = JwtUtil.createAccessToken({

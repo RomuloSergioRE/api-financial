@@ -7,6 +7,7 @@ export const registerSchema = z.object({
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]])/,
     'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
   ),
+  role: z.enum(['user', 'company']).optional().default('user'),
 });
 
 export const loginSchema = z.object({
