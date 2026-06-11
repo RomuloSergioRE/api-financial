@@ -69,6 +69,23 @@ export const AuthController = {
     res.status(200).json(result);
   }),
 
+  uploadAvatar: asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    if (!req.file) {
+      res.status(400).json({ error: 'Nenhum arquivo enviado' });
+      return;
+    }
+    const userId = req.user!.id;
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    const user = await AuthService.updateProfile(userId, { avatarUrl });
+    res.status(200).json(user);
+  }),
+
+  removeAvatar: asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const userId = req.user!.id;
+    const user = await AuthService.updateProfile(userId, { avatarUrl: null });
+    res.status(200).json(user);
+  }),
+
   logout: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
     const userId = req.user!.id;
