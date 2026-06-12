@@ -13,6 +13,7 @@ import routes from './routes/index.js';
 import { requestIdMiddleware } from './middlewares/requestId.middleware.js';
 import { metricsMiddleware } from './middlewares/metrics.middleware.js';
 import { z } from 'zod';
+import multer from 'multer';
 import { BusinessError } from './utils/errors.js';
 import { logger, getRequestId } from './utils/logger.js';
 import sequelize from './config/db.js';
@@ -25,6 +26,7 @@ const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
+logger.info(`Serving static files from ${uploadsDir}`);
 
 const app: Application = express();
 
@@ -123,6 +125,14 @@ app.use((error: unknown, req: Request, res: Response, next: NextFunction) => {
   }
   if (error instanceof z.ZodError) {
     res.status(400).json({ error: 'Validation Error', details: error.issues });
+    return;
+  }
+  if (error instanceof multer.MulterError) {
+    const messages: Record<string, string> = {
+      LIMIT_FILE_SIZE: 'Arquivo muito grande. O tamanho máximo é 2MB.',
+      LIMIT_UNEXPECTED_FILE: 'Campo de arquivo inválido.',
+    };
+    res.status(400).json({ error: messages[error.code] || 'Erro no upload do arquivo' });
     return;
   }
   const requestId = getRequestId();
