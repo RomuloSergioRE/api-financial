@@ -8,6 +8,10 @@ export const updateUserRoleSchema = z.object({
   role: z.enum(['admin', 'user', 'company']),
 });
 
+export const updateUserPlanSchema = z.object({
+  plan: z.enum(['free', 'pro', 'enterprise']),
+});
+
 export const createGlobalCategorySchema = z.object({
   name: z.string().min(1).max(255).trim(),
   icon: z.string().max(255).optional(),

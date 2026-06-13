@@ -25,22 +25,24 @@ export const JwtUtil = {
     return createAccessToken(payload);
   },
 
-  generateTokenWithOrg: (userId: string, role: string, organizationId: string, tokenVersion: number): string => {
+  generateTokenWithOrg: (userId: string, role: string, organizationId: string, tokenVersion: number, plan: string): string => {
     return createAccessToken({
       userId,
       role: role as 'admin' | 'user' | 'company',
       status: 'active',
       tokenVersion,
+      plan: plan as 'free' | 'pro' | 'enterprise',
       organizationId,
     });
   },
 
-  generateTokenWithoutOrg: (userId: string, role: string, tokenVersion: number): string => {
+  generateTokenWithoutOrg: (userId: string, role: string, tokenVersion: number, plan: string): string => {
     return createAccessToken({
       userId,
       role: role as 'admin' | 'user' | 'company',
       status: 'active',
       tokenVersion,
+      plan: plan as 'free' | 'pro' | 'enterprise',
     });
   },
 

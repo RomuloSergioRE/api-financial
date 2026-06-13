@@ -39,6 +39,7 @@ export const AuthService = {
         role: newUser.role,
         status: newUser.status,
         tokenVersion: newUser.tokenVersion,
+        plan: newUser.plan,
       });
 
       const familyId = crypto.randomUUID();
@@ -87,6 +88,7 @@ export const AuthService = {
       role: user.role,
       status: user.status,
       tokenVersion: user.tokenVersion,
+      plan: user.plan,
     });
 
     const familyId = crypto.randomUUID();
@@ -142,6 +144,7 @@ export const AuthService = {
       role: user.role,
       status: user.status,
       tokenVersion: user.tokenVersion,
+      plan: user.plan,
     });
 
     const newRefreshTokenString = JwtUtil.createRefreshTokenString();

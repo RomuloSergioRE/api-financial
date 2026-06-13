@@ -45,6 +45,13 @@ export const AdminController = {
     res.status(200).json(updated);
   }),
 
+  updateUserPlan: asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const targetId = req.params.id as string;
+    const { plan } = req.body as { plan: string };
+    const updated = await AdminService.updateUserPlan(targetId, plan as 'free' | 'pro' | 'enterprise', req.user!.id);
+    res.status(200).json(updated);
+  }),
+
   deleteUser: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const targetId = req.params.id as string;
     await AdminService.deleteUser(targetId, req.user!.id);
