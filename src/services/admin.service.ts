@@ -3,7 +3,7 @@ import { AnalyticsService } from './analytics.service.js';
 import { AuditService } from './audit.service.js';
 import { getMetrics } from '../middlewares/metrics.middleware.js';
 import sequelize from '../config/db.js';
-import type { UserInterface, Role, Status } from '../types/user.types.js';
+import type { UserInterface, Role, Status, Plan } from '../types/user.types.js';
 import type { CategoryInterface, CategoryCreateInput, CategoryUpdateInput } from '../types/category.types.js';
 import type { CategoryShareDTO } from '../types/analytics.types.js';
 import type { AuditLogInterface } from '../models/audit.model.js';
@@ -62,6 +62,13 @@ export const AdminService = {
     const updated = await AdminRepository.updateUser(targetId, { role });
     if (!updated) throw new BusinessError('User not found', 404);
     await AuditService.log(adminId, 'update_user_role', targetId, 'user', `Role changed to ${role}`);
+    return mapUserDTO(updated);
+  },
+
+  updateUserPlan: async (targetId: string, plan: Plan, adminId: string): Promise<UserDTO> => {
+    const updated = await AdminRepository.updateUser(targetId, { plan });
+    if (!updated) throw new BusinessError('User not found', 404);
+    await AuditService.log(adminId, 'update_user_plan', targetId, 'user', `Plan changed to ${plan}`);
     return mapUserDTO(updated);
   },
 

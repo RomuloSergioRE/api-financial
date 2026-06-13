@@ -24,7 +24,7 @@ export const OrganizationService = {
 
     const { organization } = await OrganizationRepository.create(userId, name);
     const user = await UserRepository.findById(userId);
-    const token = JwtUtil.generateTokenWithOrg(userId, userRole, organization.id, user?.tokenVersion ?? 0);
+    const token = JwtUtil.generateTokenWithOrg(userId, userRole, organization.id, user?.tokenVersion ?? 0, user?.plan ?? 'free');
 
     return { organization, token };
   },
@@ -51,9 +51,16 @@ export const OrganizationService = {
     if (!org) throw new BusinessError('Organization not found', 404);
 
     const user = await UserRepository.findById(userId);
-    const token = JwtUtil.generateTokenWithOrg(userId, userRole, orgId, user?.tokenVersion ?? 0);
+    const token = JwtUtil.generateTokenWithOrg(userId, userRole, orgId, user?.tokenVersion ?? 0, user?.plan ?? 'free');
 
     return { organization: org, token };
+  },
+
+  selectOrg: async (userId: string, orgId: string): Promise<{ token: string }> => {
+    const user = await UserRepository.findById(userId);
+    if (!user) throw new BusinessError('User not found', 404);
+    const token = JwtUtil.generateTokenWithOrg(userId, user.role, orgId, user?.tokenVersion ?? 0, user?.plan ?? 'free');
+    return { token };
   },
 
   update: async (orgId: string, userId: string, data: { name: string }): Promise<OrganizationInterface> => {
@@ -171,6 +178,6 @@ export const OrganizationService = {
 
   clearContext: async (userId: string, userRole: string): Promise<string> => {
     const user = await UserRepository.findById(userId);
-    return JwtUtil.generateTokenWithoutOrg(userId, userRole, user?.tokenVersion ?? 0);
+    return JwtUtil.generateTokenWithoutOrg(userId, userRole, user?.tokenVersion ?? 0, user?.plan ?? 'free');
   },
 };

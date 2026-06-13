@@ -1,3 +1,5 @@
+import type { Plan } from './user.types.js';
+
 export interface RefreshTokenInterface {
   id: string;
   userId: string;
@@ -22,6 +24,7 @@ export interface TokenPayload {
   role: 'admin' | 'user' | 'company';
   status: string;
   tokenVersion?: number;
+  plan: Plan;
   organizationId?: string;
 }
 

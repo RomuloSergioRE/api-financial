@@ -1,7 +1,8 @@
 export type Role = 'admin' | 'user' | 'company';
 export type Status = 'active' | 'inactive' | 'suspended';
+export type Plan = 'free' | 'pro' | 'enterprise';
 type SequelizeTimestamps = 'createdAt' | 'updatedAt' | 'deletedAt'
-type Creation = 'id' | 'role' | 'status' | 'tokenVersion' | SequelizeTimestamps;
+type Creation = 'id' | 'role' | 'status' | 'tokenVersion' | 'plan' | SequelizeTimestamps;
 
 export interface UserInterface {
     id: string;
@@ -11,6 +12,7 @@ export interface UserInterface {
     role: Role;
     status: Status;
     tokenVersion: number;
+    plan: Plan;
     avatarUrl?: string | null;
     createdAt: Date;
     updatedAt: Date;
@@ -22,6 +24,7 @@ export type UserCreation = Omit<UserInterface, Creation> & {
     role?: Role;
     status?: Status;
     tokenVersion?: number;
+    plan?: Plan;
 }
 
 export type UserProfileUpdate = Partial<Omit<UserInterface, 'id' | 'password' | 'tokenVersion' | SequelizeTimestamps>>;

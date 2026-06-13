@@ -5,7 +5,7 @@ import { authorize } from '../middlewares/authorization.middleware.js';
 import { validate } from '../middlewares/validation.middleware.js';
 import { exportLimiter } from '../middlewares/export-limiter.js';
 import { AdminController } from '../controllers/admin.controller.js';
-import { updateUserStatusSchema, updateUserRoleSchema, createGlobalCategorySchema, updateGlobalCategorySchema, listUsersQuerySchema, auditLogsQuerySchema, userGrowthQuerySchema } from '../validators/admin.validator.js';
+import { updateUserStatusSchema, updateUserRoleSchema, updateUserPlanSchema, createGlobalCategorySchema, updateGlobalCategorySchema, listUsersQuerySchema, auditLogsQuerySchema, userGrowthQuerySchema } from '../validators/admin.validator.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -18,6 +18,7 @@ router.get('/users', validate(listUsersQuerySchema, 'query'), AdminController.li
 router.get('/users/:id', AdminController.getUserDetails);
 router.patch('/users/:id/status', validate(updateUserStatusSchema), AdminController.updateUserStatus);
 router.patch('/users/:id/role', validate(updateUserRoleSchema), AdminController.updateUserRole);
+router.patch('/users/:id/plan', validate(updateUserPlanSchema), AdminController.updateUserPlan);
 router.delete('/users/:id', AdminController.deleteUser);
 
 // Global categories

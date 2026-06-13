@@ -4,6 +4,7 @@ import type { UserInterface, UserCreation } from '../types/user.types.js';
 
 type Role = 'admin' | 'user' | 'company';
 type Status = 'active' | 'inactive' | 'suspended';
+type Plan = 'free' | 'pro' | 'enterprise';
 type SequelizeTimestamps = 'createdAt' | 'updatedAt' | 'deletedAt';
 
 class User extends Model<Omit<UserInterface, SequelizeTimestamps>, UserCreation> implements UserInterface {
@@ -14,6 +15,7 @@ class User extends Model<Omit<UserInterface, SequelizeTimestamps>, UserCreation>
   declare role: Role;
   declare status: Status;
   declare tokenVersion: number;
+  declare plan: Plan;
   declare avatarUrl: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -57,6 +59,11 @@ User.init(
       type: DataTypes.STRING(255),
       allowNull: true,
       field: 'avatar_url',
+    },
+    plan: {
+      type: DataTypes.ENUM('free', 'pro', 'enterprise'),
+      defaultValue: 'free',
+      allowNull: false,
     },
   },
   {
