@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { requirePlan } from '../middlewares/plan.middleware.js';
 import { validate } from '../middlewares/validation.middleware.js';
 import { OrganizationController } from '../controllers/organization.controller.js';
 import {
@@ -14,6 +15,7 @@ import {
 const router = Router();
 
 router.use(authMiddleware);
+router.use(requirePlan('enterprise'));
 
 // Organization CRUD
 router.post('/', validate(createOrganizationSchema), OrganizationController.create);

@@ -4,6 +4,7 @@ declare global {
       user?: {
         id: string;
         role: 'admin' | 'user' | 'company';
+        plan: 'free' | 'pro' | 'enterprise';
         organizationId?: string;
       };
       validated?: unknown;
