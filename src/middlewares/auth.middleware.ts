@@ -45,6 +45,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     req.user = {
       id: user.id,
       role: user.role,
+      plan: decoded.plan,
       ...(decoded.organizationId ? { organizationId: decoded.organizationId } : {}),
     };
 
