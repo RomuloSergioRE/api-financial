@@ -17,6 +17,7 @@ class User extends Model<Omit<UserInterface, SequelizeTimestamps>, UserCreation>
   declare tokenVersion: number;
   declare plan: Plan;
   declare currency: string;
+  declare locale: string;
   declare avatarUrl: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -69,6 +70,11 @@ User.init(
     currency: {
       type: DataTypes.STRING(3),
       defaultValue: 'BRL',
+      allowNull: false,
+    },
+    locale: {
+      type: DataTypes.STRING(5),
+      defaultValue: 'pt-BR',
       allowNull: false,
     },
   },

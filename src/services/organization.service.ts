@@ -24,7 +24,7 @@ export const OrganizationService = {
 
     const { organization } = await OrganizationRepository.create(userId, name);
     const user = await UserRepository.findById(userId);
-    const token = JwtUtil.generateTokenWithOrg(userId, userRole, organization.id, user?.tokenVersion ?? 0, user?.plan ?? 'free', user?.currency ?? 'BRL');
+    const token = JwtUtil.generateTokenWithOrg(userId, userRole, organization.id, user?.tokenVersion ?? 0, user?.plan ?? 'free', user?.currency ?? 'BRL', user?.locale ?? 'pt-BR');
 
     return { organization, token };
   },
@@ -51,7 +51,7 @@ export const OrganizationService = {
     if (!org) throw new BusinessError('Organization not found', 404);
 
     const user = await UserRepository.findById(userId);
-    const token = JwtUtil.generateTokenWithOrg(userId, userRole, orgId, user?.tokenVersion ?? 0, user?.plan ?? 'free', user?.currency ?? 'BRL');
+    const token = JwtUtil.generateTokenWithOrg(userId, userRole, orgId, user?.tokenVersion ?? 0, user?.plan ?? 'free', user?.currency ?? 'BRL', user?.locale ?? 'pt-BR');
 
     return { organization: org, token };
   },
@@ -59,7 +59,7 @@ export const OrganizationService = {
   selectOrg: async (userId: string, orgId: string): Promise<{ token: string }> => {
     const user = await UserRepository.findById(userId);
     if (!user) throw new BusinessError('User not found', 404);
-    const token = JwtUtil.generateTokenWithOrg(userId, user.role, orgId, user?.tokenVersion ?? 0, user?.plan ?? 'free', user?.currency ?? 'BRL');
+    const token = JwtUtil.generateTokenWithOrg(userId, user.role, orgId, user?.tokenVersion ?? 0, user?.plan ?? 'free', user?.currency ?? 'BRL', user?.locale ?? 'pt-BR');
     return { token };
   },
 
@@ -178,6 +178,6 @@ export const OrganizationService = {
 
   clearContext: async (userId: string, userRole: string): Promise<string> => {
     const user = await UserRepository.findById(userId);
-    return JwtUtil.generateTokenWithoutOrg(userId, userRole, user?.tokenVersion ?? 0, user?.plan ?? 'free', user?.currency ?? 'BRL');
+    return JwtUtil.generateTokenWithoutOrg(userId, userRole, user?.tokenVersion ?? 0, user?.plan ?? 'free', user?.currency ?? 'BRL', user?.locale ?? 'pt-BR');
   },
 };

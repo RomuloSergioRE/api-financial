@@ -25,7 +25,7 @@ export const JwtUtil = {
     return createAccessToken(payload);
   },
 
-  generateTokenWithOrg: (userId: string, role: string, organizationId: string, tokenVersion: number, plan: string, currency: string): string => {
+  generateTokenWithOrg: (userId: string, role: string, organizationId: string, tokenVersion: number, plan: string, currency: string, locale: string): string => {
     return createAccessToken({
       userId,
       role: role as 'admin' | 'user' | 'company',
@@ -34,10 +34,11 @@ export const JwtUtil = {
       plan: plan as 'free' | 'pro' | 'enterprise',
       organizationId,
       currency,
+      locale,
     });
   },
 
-  generateTokenWithoutOrg: (userId: string, role: string, tokenVersion: number, plan: string, currency: string): string => {
+  generateTokenWithoutOrg: (userId: string, role: string, tokenVersion: number, plan: string, currency: string, locale: string): string => {
     return createAccessToken({
       userId,
       role: role as 'admin' | 'user' | 'company',
@@ -45,6 +46,7 @@ export const JwtUtil = {
       tokenVersion,
       plan: plan as 'free' | 'pro' | 'enterprise',
       currency,
+      locale,
     });
   },
 

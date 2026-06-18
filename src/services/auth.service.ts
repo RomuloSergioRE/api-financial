@@ -41,6 +41,7 @@ export const AuthService = {
         tokenVersion: newUser.tokenVersion,
         plan: newUser.plan,
         currency: newUser.currency,
+        locale: newUser.locale,
       });
 
       const familyId = crypto.randomUUID();
@@ -91,6 +92,7 @@ export const AuthService = {
       tokenVersion: user.tokenVersion,
       plan: user.plan,
       currency: user.currency,
+      locale: user.locale,
     });
 
     const familyId = crypto.randomUUID();
@@ -148,6 +150,7 @@ export const AuthService = {
       tokenVersion: user.tokenVersion,
       plan: user.plan,
       currency: user.currency,
+      locale: user.locale,
     });
 
     const newRefreshTokenString = JwtUtil.createRefreshTokenString();
