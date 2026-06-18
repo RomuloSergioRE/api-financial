@@ -38,4 +38,5 @@ export const logoutSchema = z.object({
 
 export const updateSettingsSchema = z.object({
   currency: z.enum(['BRL', 'USD', 'EUR', 'GBP', 'ARS']),
+  locale: z.enum(['pt-BR', 'en-US', 'es-ES']).optional(),
 });

@@ -6,6 +6,7 @@ declare global {
         role: 'admin' | 'user' | 'company';
         plan: 'free' | 'pro' | 'enterprise';
         currency?: string;
+        locale?: string;
         organizationId?: string;
       };
       validated?: unknown;
