@@ -35,3 +35,7 @@ export const refreshSchema = z.object({
 export const logoutSchema = z.object({
   refreshToken: z.string().optional(),
 });
+
+export const updateSettingsSchema = z.object({
+  currency: z.enum(['BRL', 'USD', 'EUR', 'GBP', 'ARS']),
+});

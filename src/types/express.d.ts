@@ -5,6 +5,7 @@ declare global {
         id: string;
         role: 'admin' | 'user' | 'company';
         plan: 'free' | 'pro' | 'enterprise';
+        currency?: string;
         organizationId?: string;
       };
       validated?: unknown;

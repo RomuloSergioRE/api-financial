@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { AuthController } from '../controllers/auth.controller.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { validate } from '../middlewares/validation.middleware.js';
-import { registerSchema, loginSchema, updateProfileSchema, updatePasswordSchema, refreshSchema, logoutSchema } from '../validators/auth.validator.js';
+import { registerSchema, loginSchema, updateProfileSchema, updatePasswordSchema, refreshSchema, logoutSchema, updateSettingsSchema } from '../validators/auth.validator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -88,5 +88,7 @@ authRouter.put('/password', authMiddleware, passwordLimiter, validate(updatePass
 authRouter.post('/logout', authMiddleware, logoutLimiter, AuthController.logout);
 authRouter.post('/avatar', authMiddleware, avatarUpload.single('avatar'), AuthController.uploadAvatar);
 authRouter.delete('/avatar', authMiddleware, AuthController.removeAvatar);
+
+authRouter.put('/settings', authMiddleware, validate(updateSettingsSchema), AuthController.updateSettings);
 
 export default authRouter;

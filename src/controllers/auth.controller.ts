@@ -86,6 +86,12 @@ export const AuthController = {
     res.status(200).json(user);
   }),
 
+  updateSettings: asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const userId = req.user!.id;
+    const user = await AuthService.updateProfile(userId, req.body);
+    res.status(200).json(user);
+  }),
+
   logout: asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
     const userId = req.user!.id;

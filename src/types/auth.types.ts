@@ -26,6 +26,7 @@ export interface TokenPayload {
   tokenVersion?: number;
   plan: Plan;
   organizationId?: string;
+  currency?: string;
 }
 
 export interface AuthLoginResponse {
