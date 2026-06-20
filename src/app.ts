@@ -37,17 +37,25 @@ const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',')
   : ['http://localhost:3000', 'http://localhost:*'];
 
+const cspDirectives: Record<string, string[]> = {
+  defaultSrc: ["'self'"],
+  connectSrc: ["'self'", ...allowedOrigins],
+  styleSrc: ["'self'", "'unsafe-inline'"],
+  scriptSrc: ["'self'"],
+  imgSrc: ["'self'", "data:"],
+};
+
+if (process.env.ENABLE_SWAGGER === 'true') {
+  const swaggerCdn = 'https://unpkg.com';
+  cspDirectives.styleSrc!.push(swaggerCdn);
+  cspDirectives.scriptSrc!.push(swaggerCdn);
+  cspDirectives.imgSrc!.push(swaggerCdn);
+  cspDirectives.fontSrc = [swaggerCdn];
+}
+
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      connectSrc: ["'self'", ...allowedOrigins],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:"],
-    },
-  },
+  contentSecurityPolicy: { directives: cspDirectives },
 }));
 
 app.use(cors({
@@ -71,7 +79,7 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json({ limit: '10kb' })); 
+app.use(express.json({ limit: '1mb' })); 
 
 const skipOptions = (req: Request) => req.method === 'OPTIONS';
 
@@ -89,8 +97,10 @@ app.use(metricsMiddleware);
 
 const renderUrl = process.env.RENDER_EXTERNAL_URL || process.env.SWAGGER_SERVER_URL;
 const swaggerDoc = getSwaggerDocument(renderUrl);
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.ENABLE_SWAGGER === 'true') {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
+} else {
+  logger.info('Swagger UI desabilitado. Defina ENABLE_SWAGGER=true para ativar.');
 }
 
 app.use('/uploads', express.static(uploadsDir));
