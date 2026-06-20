@@ -182,6 +182,66 @@ export function getSwaggerDocument(renderUrl?: string): OpenAPIV3.Document {
           },
         },
       },
+      '/auth/avatar': {
+        post: {
+          summary: 'Faz upload da foto do perfil (avatar)',
+          tags: ['Autenticação'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'multipart/form-data': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    avatar: { type: 'string', format: 'binary', description: 'Imagem (máx: 2MB, formatos: jpg/png/gif/webp)' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '200': { description: 'Avatar atualizado com sucesso.' },
+            '400': { description: 'Arquivo inválido ou muito grande.' },
+            '401': { description: 'Token JWT ausente ou expirado.' },
+          },
+        },
+        delete: {
+          summary: 'Remove a foto do perfil (avatar)',
+          tags: ['Autenticação'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            '204': { description: 'Avatar removido com sucesso.' },
+            '401': { description: 'Token JWT ausente ou expirado.' },
+          },
+        },
+      },
+      '/auth/settings': {
+        put: {
+          summary: 'Atualiza configurações de moeda e localidade do usuário',
+          tags: ['Autenticação'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    currency: { type: 'string', enum: ['BRL', 'USD', 'EUR'], example: 'BRL', description: 'Moeda padrão' },
+                    locale: { type: 'string', enum: ['pt-BR', 'en-US', 'es-ES'], example: 'pt-BR', description: 'Localidade' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '200': { description: 'Configurações atualizadas com sucesso.' },
+            '400': { description: 'Dados inválidos.' },
+            '401': { description: 'Token JWT ausente ou expirado.' },
+          },
+        },
+      },
       '/auth/me': {
         get: {
           summary: 'Retorna os dados do perfil do usuário logado',
@@ -272,7 +332,14 @@ export function getSwaggerDocument(renderUrl?: string): OpenAPIV3.Document {
           summary: 'Lista todas as transações do usuário',
           tags: ['Transações'],
           security: [{ bearerAuth: [] }],
-          parameters: paginationParams,
+          parameters: [
+            ...paginationParams,
+            { name: 'categoryId', in: 'query', schema: { type: 'string', format: 'uuid' }, description: 'Filtrar por categoria' },
+            { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date' }, description: 'Data inicial (YYYY-MM-DD)' },
+            { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date' }, description: 'Data final (YYYY-MM-DD)' },
+            { name: 'search', in: 'query', schema: { type: 'string' }, description: 'Buscar por descrição' },
+            { name: 'tags', in: 'query', schema: { type: 'string' }, description: 'Filtrar por tags (IDs separados por vírgula)' },
+          ],
           responses: {
             '200': { description: 'Lista paginada retornada com sucesso.', content: { 'application/json': { schema: paginationResponse } } },
             '401': { description: 'Token JWT ausente ou expirado.' },
@@ -400,7 +467,7 @@ export function getSwaggerDocument(renderUrl?: string): OpenAPIV3.Document {
           responses: { '200': { description: 'Atualizado.' }, '404': { description: 'Inexistente ou sem permissão.' } },
         },
         delete: {
-          summary: 'Exclui de forma definitiva uma transação',
+          summary: 'Remove uma transação (soft delete)',
           tags: ['Transações'],
           security: [{ bearerAuth: [] }],
           parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
@@ -1237,6 +1304,29 @@ export function getSwaggerDocument(renderUrl?: string): OpenAPIV3.Document {
             },
           },
           responses: { '200': { description: 'Papel atualizado.' }, '403': { description: 'Apenas admin.' } },
+        },
+      },
+      '/admin/users/{id}/plan': {
+        patch: {
+          summary: '[Admin] Altera o plano de um usuário',
+          tags: ['Admin'],
+          security: [{ bearerAuth: [] }],
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['plan'],
+                  properties: {
+                    plan: { type: 'string', enum: ['free', 'pro', 'enterprise'], example: 'pro' },
+                  },
+                },
+              },
+            },
+          },
+          responses: { '200': { description: 'Plano atualizado.' }, '403': { description: 'Apenas admin.' } },
         },
       },
       '/admin/categories': {

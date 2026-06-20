@@ -40,6 +40,10 @@ services:
           property: database
       - key: JWT_SECRET
         generateValue: true
+      - key: ENABLE_SWAGGER
+        value: "true"
+      - key: SWAGGER_SERVER_URL
+        value: "https://api-financial.onrender.com"
       - key: CORS_ORIGINS
         value: "https://app-financial.vercel.app,https://app-financial-git-main.vercel.app"
 

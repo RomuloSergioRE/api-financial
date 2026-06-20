@@ -29,6 +29,8 @@ function validateRequiredEnvs(): void {
   }
 }
 
+let server: ReturnType<typeof app.listen>;
+
 async function startServer(): Promise<void> {
   try {
     validateRequiredEnvs();
@@ -44,7 +46,7 @@ async function startServer(): Promise<void> {
 
     startRecurringScheduler();
 
-    app.listen(PORT, () => {
+    server = app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
       logger.info(`Swagger UI available at http://localhost:${PORT}/api-docs`);
     });
@@ -53,5 +55,26 @@ async function startServer(): Promise<void> {
     process.exit(1);
   }
 }
+
+function gracefulShutdown(signal: string) {
+  logger.info(`Received ${signal}. Shutting down gracefully...`);
+  if (server) {
+    server.close(() => {
+      logger.info('HTTP server closed.');
+      sequelize.close().then(() => {
+        logger.info('Database connection closed.');
+        process.exit(0);
+      }).catch((err) => {
+        logger.error('Error closing database connection', err);
+        process.exit(1);
+      });
+    });
+  } else {
+    process.exit(0);
+  }
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 void startServer();

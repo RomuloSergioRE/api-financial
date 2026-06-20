@@ -18,7 +18,7 @@ API REST para gerenciamento financeiro pessoal e empresarial com autenticação 
 
 ## Funcionalidades
 
-- **Autenticação JWT com refresh token rotation** — Registro, login (access token 15min + refresh token 7d single-use), refresh com rotação e detecção de roubo (token families), logout real, perfil e alteração de senha com revogação em cascata
+- **Autenticação JWT com refresh token rotation** — Registro, login (access token curto + refresh token 7d single-use), refresh com rotação e detecção de roubo (token families), logout real, perfil, upload/remoção de avatar, alteração de senha com revogação em cascata e configurações de moeda/localidade
 - **Transações** — CRUD completo com exportação CSV/PDF, importação CSV, template de importação e link/unlink de tags
 - **Categorias** — CRUD de categorias pessoais + globais (admin), exportação CSV/PDF e importação CSV
 - **Tags** — CRUD de tags com link/unlink em transações (relação N:N)
@@ -33,7 +33,7 @@ API REST para gerenciamento financeiro pessoal e empresarial com autenticação 
 - **Validação Zod** — Schemas em todos os endpoints com mensagens de erro descritivas
 - **Rate limiting específico** — Limites diferenciados por rota (login, register, refresh, password, export, logout)
 - **CSP ativo** — Content-Security-Policy configurado via Helmet (compatível com Swagger UI)
-- **Access token curto (15min)** — Janela de ataque reduzida; refresh token opaco armazenado no DB com hash SHA-256
+- **Access token curto (1h ou configurável via env)** — Janela de ataque reduzida; refresh token opaco armazenado no DB com hash SHA-256
 - **Documentação interativa** — Swagger UI disponível em `/api-docs`
 
 ---
@@ -94,140 +94,144 @@ O projeto segue uma arquitetura em camadas com separação clara de responsabili
 
 ### Autenticação
 
-| Método | Rota | Descrição | Auth |
-|--------|------|-----------|------|
-| `POST` | `/auth/register` | Cadastrar novo usuário (rate limit: 3/min) | ❌ |
-| `POST` | `/auth/login` | Login e retorno do JWT (rate limit: 5/min) | ❌ |
-| `POST` | `/auth/refresh` | Renovar access token usando refresh token (rate limit: 10/min) | ❌ |
-| `POST` | `/auth/logout` | Encerrar sessão e invalidar refresh token | ✅ |
-| `GET` | `/auth/me` | Retorna dados do perfil do usuário logado | ✅ |
-| `PUT` | `/auth/profile` | Atualizar nome e/ou email | ✅ |
-| `PUT` | `/auth/password` | Alterar a senha (rate limit: 3/min) | ✅ |
+| Método | Rota | Descrição | Auth | Plano |
+|--------|------|-----------|------|-------|
+| `POST` | `/auth/register` | Cadastrar novo usuário (rate limit: 3/min) | ❌ | free |
+| `POST` | `/auth/login` | Login e retorno do JWT (rate limit: 5/min) | ❌ | free |
+| `POST` | `/auth/refresh` | Renovar access token usando refresh token (rate limit: 10/min) | ❌ | free |
+| `POST` | `/auth/logout` | Encerrar sessão e invalidar refresh token | ✅ | free |
+| `GET` | `/auth/me` | Retorna dados do perfil do usuário logado | ✅ | free |
+| `PUT` | `/auth/profile` | Atualizar nome e/ou email | ✅ | free |
+| `PUT` | `/auth/password` | Alterar a senha (rate limit: 3/min) | ✅ | free |
+| `POST` | `/auth/avatar` | Upload de foto do perfil (avatar) | ✅ | free |
+| `DELETE` | `/auth/avatar` | Remover foto do perfil | ✅ | free |
+| `PUT` | `/auth/settings` | Atualizar moeda e localidade | ✅ | free |
 
 ### Transações
 
-| Método | Rota | Descrição | Auth |
-|--------|------|-----------|------|
-| `GET` | `/transactions?page=&limit=` | Listar transações paginadas | ✅ |
-| `POST` | `/transactions` | Criar transação | ✅ |
-| `GET` | `/transactions/:id` | Detalhar transação | ✅ |
-| `PUT` | `/transactions/:id` | Atualizar transação | ✅ |
-| `DELETE` | `/transactions/:id` | Remover transação (soft delete) | ✅ |
-| `GET` | `/transactions/export/csv` | Exportar transações como CSV | ✅ |
-| `GET` | `/transactions/export/pdf` | Exportar transações como PDF | ✅ |
-| `GET` | `/transactions/export/template` | Baixar template CSV para importação | ✅ |
-| `POST` | `/transactions/import/csv` | Importar transações via CSV (multipart) | ✅ |
-| `POST` | `/transactions/:id/tags` | Adicionar tags a uma transação | ✅ |
-| `DELETE` | `/transactions/:id/tags/:tagId` | Remover tag de uma transação | ✅ |
+| Método | Rota | Descrição | Auth | Plano |
+|--------|------|-----------|------|-------|
+| `GET` | `/transactions?page=&limit=&categoryId=&startDate=&endDate=&search=&tags=` | Listar transações paginadas com filtros | ✅ | free |
+| `POST` | `/transactions` | Criar transação | ✅ | free |
+| `GET` | `/transactions/:id` | Detalhar transação | ✅ | free |
+| `PUT` | `/transactions/:id` | Atualizar transação | ✅ | free |
+| `DELETE` | `/transactions/:id` | Remover transação (soft delete) | ✅ | free |
+| `GET` | `/transactions/export/csv` | Exportar transações como CSV | ✅ | free |
+| `GET` | `/transactions/export/pdf` | Exportar transações como PDF | ✅ | free |
+| `GET` | `/transactions/export/template` | Baixar template CSV para importação | ✅ | free |
+| `POST` | `/transactions/import/csv` | Importar transações via CSV (multipart) | ✅ | free |
+| `POST` | `/transactions/:id/tags` | Adicionar tags a uma transação | ✅ | free |
+| `DELETE` | `/transactions/:id/tags/:tagId` | Remover tag de uma transação | ✅ | free |
 
 ### Categorias
 
-| Método | Rota | Descrição | Auth |
-|--------|------|-----------|------|
-| `GET` | `/categories?page=&limit=` | Listar categorias do usuário | ✅ |
-| `POST` | `/categories` | Criar categoria | ✅ |
-| `GET` | `/categories/:id` | Detalhar categoria | ✅ |
-| `PUT` | `/categories/:id` | Atualizar categoria | ✅ |
-| `DELETE` | `/categories/:id` | Remover categoria (soft delete) | ✅ |
-| `GET` | `/categories/export/csv` | Exportar categorias como CSV | ✅ |
-| `GET` | `/categories/export/pdf` | Exportar categorias como PDF | ✅ |
-| `POST` | `/categories/import/csv` | Importar categorias via CSV (multipart) | ✅ |
+| Método | Rota | Descrição | Auth | Plano |
+|--------|------|-----------|------|-------|
+| `GET` | `/categories?page=&limit=` | Listar categorias do usuário | ✅ | free |
+| `POST` | `/categories` | Criar categoria | ✅ | free |
+| `GET` | `/categories/:id` | Detalhar categoria | ✅ | free |
+| `PUT` | `/categories/:id` | Atualizar categoria | ✅ | free |
+| `DELETE` | `/categories/:id` | Remover categoria (soft delete) | ✅ | free |
+| `GET` | `/categories/export/csv` | Exportar categorias como CSV | ✅ | free |
+| `GET` | `/categories/export/pdf` | Exportar categorias como PDF | ✅ | free |
+| `POST` | `/categories/import/csv` | Importar categorias via CSV (multipart) | ✅ | free |
 
 ### Tags
 
-| Método | Rota | Descrição | Auth |
-|--------|------|-----------|------|
-| `GET` | `/tags?page=&limit=` | Listar tags | ✅ |
-| `POST` | `/tags` | Criar tag | ✅ |
-| `GET` | `/tags/:id` | Detalhar tag | ✅ |
-| `PUT` | `/tags/:id` | Atualizar tag | ✅ |
-| `DELETE` | `/tags/:id` | Remover tag (soft delete) | ✅ |
+| Método | Rota | Descrição | Auth | Plano |
+|--------|------|-----------|------|-------|
+| `GET` | `/tags?page=&limit=` | Listar tags | ✅ | free |
+| `POST` | `/tags` | Criar tag | ✅ | pro |
+| `GET` | `/tags/:id` | Detalhar tag | ✅ | free |
+| `PUT` | `/tags/:id` | Atualizar tag | ✅ | pro |
+| `DELETE` | `/tags/:id` | Remover tag (soft delete) | ✅ | pro |
 
 ### Orçamentos (Budgets)
 
-| Método | Rota | Descrição | Auth |
-|--------|------|-----------|------|
-| `GET` | `/budgets?page=&limit=` | Listar orçamentos | ✅ |
-| `POST` | `/budgets` | Criar orçamento | ✅ |
-| `GET` | `/budgets/:id` | Detalhar orçamento (com spent calculado) | ✅ |
-| `PUT` | `/budgets/:id` | Atualizar orçamento | ✅ |
-| `DELETE` | `/budgets/:id` | Remover orçamento (soft delete) | ✅ |
+| Método | Rota | Descrição | Auth | Plano |
+|--------|------|-----------|------|-------|
+| `GET` | `/budgets?page=&limit=` | Listar orçamentos | ✅ | free |
+| `POST` | `/budgets` | Criar orçamento | ✅ | pro |
+| `GET` | `/budgets/:id` | Detalhar orçamento (com spent calculado) | ✅ | free |
+| `PUT` | `/budgets/:id` | Atualizar orçamento | ✅ | pro |
+| `DELETE` | `/budgets/:id` | Remover orçamento (soft delete) | ✅ | pro |
 
 ### Metas (Goals)
 
-| Método | Rota | Descrição | Auth |
-|--------|------|-----------|------|
-| `GET` | `/goals?page=&limit=` | Listar metas | ✅ |
-| `POST` | `/goals` | Criar meta | ✅ |
-| `GET` | `/goals/:id` | Detalhar meta (com progress calculado) | ✅ |
-| `PUT` | `/goals/:id` | Atualizar meta | ✅ |
-| `DELETE` | `/goals/:id` | Remover meta (soft delete) | ✅ |
+| Método | Rota | Descrição | Auth | Plano |
+|--------|------|-----------|------|-------|
+| `GET` | `/goals?page=&limit=` | Listar metas | ✅ | free |
+| `POST` | `/goals` | Criar meta | ✅ | pro |
+| `GET` | `/goals/:id` | Detalhar meta (com progress calculado) | ✅ | free |
+| `PUT` | `/goals/:id` | Atualizar meta | ✅ | pro |
+| `DELETE` | `/goals/:id` | Remover meta (soft delete) | ✅ | pro |
 
 ### Regras Recorrentes
 
-| Método | Rota | Descrição | Auth |
-|--------|------|-----------|------|
-| `GET` | `/recurring?page=&limit=` | Listar regras recorrentes | ✅ |
-| `POST` | `/recurring` | Criar regra recorrente | ✅ |
-| `GET` | `/recurring/:id` | Detalhar regra recorrente | ✅ |
-| `PUT` | `/recurring/:id` | Atualizar regra recorrente | ✅ |
-| `DELETE` | `/recurring/:id` | Remover regra recorrente (soft delete) | ✅ |
-| `POST` | `/recurring/:id/execute` | Executar regra manualmente (gera transação) | ✅ |
+| Método | Rota | Descrição | Auth | Plano |
+|--------|------|-----------|------|-------|
+| `GET` | `/recurring?page=&limit=` | Listar regras recorrentes | ✅ | free |
+| `POST` | `/recurring` | Criar regra recorrente | ✅ | pro |
+| `GET` | `/recurring/:id` | Detalhar regra recorrente | ✅ | free |
+| `PUT` | `/recurring/:id` | Atualizar regra recorrente | ✅ | pro |
+| `DELETE` | `/recurring/:id` | Remover regra recorrente (soft delete) | ✅ | pro |
+| `POST` | `/recurring/:id/execute` | Executar regra manualmente (gera transação) | ✅ | pro |
 
 ### Organizações
 
-| Método | Rota | Descrição | Auth |
-|--------|------|-----------|------|
-| `POST` | `/organizations` | Criar organização | ✅ |
-| `GET` | `/organizations` | Listar organizações do usuário | ✅ |
-| `GET` | `/organizations/:id` | Detalhar organização | ✅ |
-| `PUT` | `/organizations/:id` | Atualizar organização | ✅ |
-| `DELETE` | `/organizations/:id` | Remover organização (soft delete) | ✅ |
-| `PATCH` | `/organizations/:id/select` | Selecionar organização como contexto ativo | ✅ |
-| `PATCH` | `/organizations/select-none` | Remover seleção de organização (modo pessoal) | ✅ |
-| `GET` | `/organizations/:id/members` | Listar membros da organização | ✅ |
-| `POST` | `/organizations/:id/members` | Convidar membro para organização | ✅ |
-| `PATCH` | `/organizations/:id/members/:memberId/accept` | Aceitar convite | ✅ |
-| `PUT` | `/organizations/:id/members/:memberId/role` | Alterar papel de membro | ✅ |
-| `DELETE` | `/organizations/:id/members/:memberId` | Remover membro | ✅ |
-| `GET` | `/organizations/:id/fiscal-report` | Relatório fiscal da organização | ✅ |
+| Método | Rota | Descrição | Auth | Plano |
+|--------|------|-----------|------|-------|
+| `POST` | `/organizations` | Criar organização | ✅ | enterprise |
+| `GET` | `/organizations` | Listar organizações do usuário | ✅ | enterprise |
+| `GET` | `/organizations/:id` | Detalhar organização | ✅ | enterprise |
+| `PUT` | `/organizations/:id` | Atualizar organização | ✅ | enterprise |
+| `DELETE` | `/organizations/:id` | Remover organização (soft delete) | ✅ | enterprise |
+| `PATCH` | `/organizations/:id/select` | Selecionar organização como contexto ativo | ✅ | enterprise |
+| `PATCH` | `/organizations/select-none` | Remover seleção de organização (modo pessoal) | ✅ | enterprise |
+| `GET` | `/organizations/:id/members` | Listar membros da organização | ✅ | enterprise |
+| `POST` | `/organizations/:id/members` | Convidar membro para organização | ✅ | enterprise |
+| `PATCH` | `/organizations/:id/members/:memberId/accept` | Aceitar convite | ✅ | enterprise |
+| `PUT` | `/organizations/:id/members/:memberId/role` | Alterar papel de membro | ✅ | enterprise |
+| `DELETE` | `/organizations/:id/members/:memberId` | Remover membro | ✅ | enterprise |
+| `GET` | `/organizations/:id/fiscal-report` | Relatório fiscal da organização | ✅ | enterprise |
 
 ### Analytics
 
-| Método | Rota | Descrição | Auth |
-|--------|------|-----------|------|
-| `GET` | `/analytics/balance?startDate=&endDate=&categoryId=` | Saldo consolidado (receitas - despesas) | ✅ |
-| `GET` | `/analytics/categories?startDate=&endDate=&categoryId=` | Distribuição percentual por categoria | ✅ |
-| `GET` | `/analytics/monthly-series?startDate=&endDate=` | Série mensal de receitas/despesas | ✅ |
-| `GET` | `/analytics/comparison?startDate=&endDate=&compareStart=&compareEnd=` | Comparação entre dois períodos | ✅ |
-| `GET` | `/analytics/top-categories?startDate=&endDate=&limit=` | Top categorias por valor | ✅ |
-| `GET` | `/analytics/summary?startDate=&endDate=` | Resumo executivo (totais, médias, saldo) | ✅ |
-| `GET` | `/analytics/cash-flow?startDate=&endDate=` | Projeção de fluxo de caixa | ✅ |
-| `GET` | `/analytics/export/csv` | Exportar analytics como CSV | ✅ |
-| `GET` | `/analytics/export/pdf` | Exportar analytics como PDF | ✅ |
+| Método | Rota | Descrição | Auth | Plano |
+|--------|------|-----------|------|-------|
+| `GET` | `/analytics/balance?startDate=&endDate=&categoryId=` | Saldo consolidado (receitas - despesas) | ✅ | free |
+| `GET` | `/analytics/categories?startDate=&endDate=&categoryId=` | Distribuição percentual por categoria | ✅ | free |
+| `GET` | `/analytics/monthly-series?startDate=&endDate=` | Série mensal de receitas/despesas | ✅ | free |
+| `GET` | `/analytics/comparison?startDate=&endDate=&compareStart=&compareEnd=` | Comparação entre dois períodos | ✅ | free |
+| `GET` | `/analytics/top-categories?startDate=&endDate=&limit=` | Top categorias por valor | ✅ | free |
+| `GET` | `/analytics/summary?startDate=&endDate=` | Resumo executivo (totais, médias, saldo) | ✅ | free |
+| `GET` | `/analytics/cash-flow?startDate=&endDate=` | Projeção de fluxo de caixa | ✅ | free |
+| `GET` | `/analytics/export/csv` | Exportar analytics como CSV | ✅ | free |
+| `GET` | `/analytics/export/pdf` | Exportar analytics como PDF | ✅ | free |
 
 ### Admin (requer role `admin`)
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `GET` | `/admin/users?page=&limit=&role=&status=&search=` | Listar todos os usuários |
-| `GET` | `/admin/users/:id` | Detalhar usuário com estatísticas financeiras |
-| `PATCH` | `/admin/users/:id/status` | Alterar status de um usuário |
-| `PATCH` | `/admin/users/:id/role` | Alterar papel de um usuário |
-| `DELETE` | `/admin/users/:id` | Remover (soft delete) um usuário |
-| `GET` | `/admin/categories` | Listar categorias globais |
-| `POST` | `/admin/categories` | Criar categoria global |
-| `PUT` | `/admin/categories/:id` | Atualizar categoria global |
-| `DELETE` | `/admin/categories/:id` | Remover categoria global |
-| `GET` | `/admin/audit-logs?page=&limit=&action=&userId=` | Listar logs de auditoria |
-| `GET` | `/admin/analytics/overview` | Visão geral da plataforma |
-| `GET` | `/admin/analytics/users/:id` | Métricas financeiras de um usuário |
-| `GET` | `/admin/analytics/user-growth?startDate=&endDate=` | Crescimento de cadastros |
-| `GET` | `/admin/analytics/performance?startDate=&endDate=` | Performance da plataforma |
-| `GET` | `/admin/export/users/csv` | Exportar usuários como CSV |
-| `GET` | `/admin/export/transactions/csv` | Exportar todas as transações como CSV |
-| `GET` | `/admin/export/audit-logs/csv` | Exportar audit logs como CSV |
-| `POST` | `/admin/import/transactions/csv` | Importar transações CSV (multipart) |
+| Método | Rota | Descrição | Plano |
+|--------|------|-----------|-------|
+| `GET` | `/admin/users?page=&limit=&role=&status=&search=` | Listar todos os usuários | admin |
+| `GET` | `/admin/users/:id` | Detalhar usuário com estatísticas financeiras | admin |
+| `PATCH` | `/admin/users/:id/status` | Alterar status de um usuário | admin |
+| `PATCH` | `/admin/users/:id/role` | Alterar papel de um usuário | admin |
+| `PATCH` | `/admin/users/:id/plan` | Alterar plano de um usuário (free/pro/enterprise) | admin |
+| `DELETE` | `/admin/users/:id` | Remover (soft delete) um usuário | admin |
+| `GET` | `/admin/categories` | Listar categorias globais | admin |
+| `POST` | `/admin/categories` | Criar categoria global | admin |
+| `PUT` | `/admin/categories/:id` | Atualizar categoria global | admin |
+| `DELETE` | `/admin/categories/:id` | Remover categoria global | admin |
+| `GET` | `/admin/audit-logs?page=&limit=&action=&userId=` | Listar logs de auditoria | admin |
+| `GET` | `/admin/analytics/overview` | Visão geral da plataforma | admin |
+| `GET` | `/admin/analytics/users/:id` | Métricas financeiras de um usuário | admin |
+| `GET` | `/admin/analytics/user-growth?startDate=&endDate=` | Crescimento de cadastros | admin |
+| `GET` | `/admin/analytics/performance?startDate=&endDate=` | Performance da plataforma | admin |
+| `GET` | `/admin/export/users/csv` | Exportar usuários como CSV | admin |
+| `GET` | `/admin/export/transactions/csv` | Exportar todas as transações como CSV | admin |
+| `GET` | `/admin/export/audit-logs/csv` | Exportar audit logs como CSV | admin |
+| `POST` | `/admin/import/transactions/csv` | Importar transações CSV (multipart) | admin |
 
 ### Health Check
 
@@ -280,7 +284,30 @@ npm run dev
 
 Acesse a documentação Swagger em [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
 
-> **Deploy no Render:** Configure as envs `NODE_ENV=production`, `DB_USE_SSL=true`, e as credenciais do Render PostgreSQL. O build command é `npm run build` e o start command `npm start`. As envs de JWT são `JWT_ACCESS_EXPIRES_IN=15m` e `JWT_REFRESH_EXPIRES_IN=7` (dias).
+### Populando dados iniciais
+
+```bash
+# Cria o usuário admin (email: admin@admin.com / senha: Admin@12345)
+npm run seed:admin
+
+# Gera transações de exemplo para teste
+npm run seed:transactions
+```
+
+### Deploy no Render
+
+Configure as seguintes envs no painel do Render:
+
+| Variável | Valor |
+|---|---|
+| `NODE_ENV` | `production` |
+| `DB_USE_SSL` | `true` |
+| `JWT_ACCESS_EXPIRES_IN` | `15m` (ou o desejado) |
+| `JWT_REFRESH_EXPIRES_IN` | `7` |
+| `ENABLE_SWAGGER` | `true` (para ativar `/api-docs` em produção) |
+| `SWAGGER_SERVER_URL` | `https://seu-app.onrender.com` |
+
+O build command é `npm run build` e o start command `npm start`. As credenciais do banco PostgreSQL do Render são injetadas automaticamente via `fromDatabase` no `render.yaml`. Consulte o arquivo [`render.yaml`](./render.yaml) para a configuração completa.
 
 ---
 
@@ -317,4 +344,4 @@ Com o módulo de organizações, é possível testar o isolamento de dados entre
 ## Links
 
 - **Repositório:** [github.com/RomuloSergioRE/api-financial](https://github.com/RomuloSergioRE/api-financial)
-- **Swagger:** [`/api-docs`](http://localhost:3000/api-docs) (local) ou [`https://api-financial-279h.onrender.com/api-docs`](https://api-financial-279h.onrender.com/api-docs) (produção)
+- **Swagger:** [`/api-docs`](http://localhost:3000/api-docs) (local) ou no seu domínio do Render em `/api-docs` (produção, se `ENABLE_SWAGGER=true`)
