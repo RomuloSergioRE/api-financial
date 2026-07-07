@@ -15,7 +15,7 @@ API REST para gerenciamento financeiro pessoal e empresarial com autenticação 
 </div>
 
 > 🔗 **Produção:** [https://api-financial-279h.onrender.com](https://api-financial-279h.onrender.com) · [Swagger UI](https://api-financial-279h.onrender.com/api-docs)  
-> 🖥️ **Frontend:** [https://app-financial.vercel.app](https://app-financial.vercel.app)
+> 🖥️ **Frontend:** [https://app-financial-lemon.vercel.app](https://app-financial-lemon.vercel.app)
 
 ---
 
@@ -326,7 +326,7 @@ O deploy é feito via **Infrastructure as Code** — o arquivo [`render.yaml`](.
 | `DB_USE_SSL` | `true` (configurado no `render.yaml`) |
 | `DB_SSL_REJECT_UNAUTHORIZED` | `true` (exigido pelo Render) |
 | `JWT_SECRET` | Gerado automaticamente (`generateValue: true`) |
-| `CORS_ORIGINS` | `https://app-financial.vercel.app` (configurado no `render.yaml` — ajuste se o nome do projeto Vercel for diferente) |
+| `CORS_ORIGINS` | `https://app-financial-lemon.vercel.app` (configurado no `render.yaml` — ajuste se o nome do projeto Vercel for diferente) |
 
 > ⚠️ O `NODE_ENV=production` e demais variáveis já estão configuradas no `render.yaml` — não é necessário configurar manualmente no painel.
 
