@@ -43,7 +43,7 @@ services:
       - key: ENABLE_SWAGGER
         value: "true"
       - key: SWAGGER_SERVER_URL
-        value: "https://api-financial.onrender.com"
+        value: "https://api-financial-279h.onrender.com"
       - key: CORS_ORIGINS
         value: "https://app-financial.vercel.app,https://app-financial-git-main.vercel.app"
       # ⚠️ Ajuste o CORS_ORIGINS acima se o nome do seu projeto Vercel for diferente
