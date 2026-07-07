@@ -5,7 +5,7 @@ import { AuthService } from '../services/auth.service.js';
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
+  sameSite: 'none' as const,
   path: '/',
 };
 
