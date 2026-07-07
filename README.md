@@ -14,6 +14,9 @@ API REST para gerenciamento financeiro pessoal e empresarial com autenticação 
 
 </div>
 
+> 🔗 **Produção:** [https://api-financial.onrender.com](https://api-financial.onrender.com) · [Swagger UI](https://api-financial.onrender.com/api-docs)  
+> 🖥️ **Frontend:** [https://app-financial.vercel.app](https://app-financial.vercel.app)
+
 ---
 
 ## Funcionalidades
@@ -33,7 +36,7 @@ API REST para gerenciamento financeiro pessoal e empresarial com autenticação 
 - **Validação Zod** — Schemas em todos os endpoints com mensagens de erro descritivas
 - **Rate limiting específico** — Limites diferenciados por rota (login, register, refresh, password, export, logout)
 - **CSP ativo** — Content-Security-Policy configurado via Helmet (compatível com Swagger UI)
-- **Access token curto (1h ou configurável via env)** — Janela de ataque reduzida; refresh token opaco armazenado no DB com hash SHA-256
+- **Access token curto (15min ou configurável via env)** — Janela de ataque reduzida; refresh token opaco armazenado no DB com hash SHA-256
 - **Documentação interativa** — Swagger UI disponível em `/api-docs`
 
 ---
@@ -202,7 +205,7 @@ O projeto segue uma arquitetura em camadas com separação clara de responsabili
 | `GET` | `/analytics/balance?startDate=&endDate=&categoryId=` | Saldo consolidado (receitas - despesas) | ✅ | free |
 | `GET` | `/analytics/categories?startDate=&endDate=&categoryId=` | Distribuição percentual por categoria | ✅ | free |
 | `GET` | `/analytics/monthly-series?startDate=&endDate=` | Série mensal de receitas/despesas | ✅ | free |
-| `GET` | `/analytics/comparison?startDate=&endDate=&compareStart=&compareEnd=` | Comparação entre dois períodos | ✅ | free |
+| `GET` | `/analytics/comparison?month=&year=` | Comparação entre mês atual e anterior | ✅ | free |
 | `GET` | `/analytics/top-categories?startDate=&endDate=&limit=` | Top categorias por valor | ✅ | free |
 | `GET` | `/analytics/summary?startDate=&endDate=` | Resumo executivo (totais, médias, saldo) | ✅ | free |
 | `GET` | `/analytics/cash-flow?startDate=&endDate=` | Projeção de fluxo de caixa | ✅ | free |
@@ -248,10 +251,10 @@ O projeto segue uma arquitetura em camadas com separação clara de responsabili
 - **Logout real** — `POST /auth/logout` deleta o refresh token do banco de dados, encerrando a sessão efetivamente
 - **Troca de senha com revogação** — Ao alterar a senha, todos os refresh tokens do usuário são deletados, forçando re-login em todos os dispositivos
 - **Password complexity** — Mínimo 8 caracteres, pelo menos uma letra maiúscula, uma minúscula, um dígito e um caractere especial
-- **CORS configurável** — Via variável de ambiente `CORS_ORIGIN`, restrito por padrão a localhost
+- **CORS configurável** — Via variável de ambiente `CORS_ORIGINS`, restrito por padrão a localhost
 - **CSP via Helmet** — Content-Security-Policy configurado com suporte a Swagger UI (CDN allowlist)
 - **Rate limiting**:
-  - Global: 100 requisições a cada 15 minutos
+  - Global: 300 requisições a cada 15 minutos
   - Login: 5 tentativas por minuto
   - Register: 3 tentativas por minuto
   - Refresh: 10 tentativas por minuto
@@ -284,7 +287,19 @@ npm run dev
 
 Acesse a documentação Swagger em [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
 
-### Populando dados iniciais
+### Demonstração
+
+Um **usuário demo** com plano **Pro** é criado automaticamente na primeira inicialização:
+
+| Campo | Valor |
+|-------|-------|
+| **Email** | `demo@zenyfin.app` |
+| **Senha** | `Demo@123456` |
+| **Plano** | Pro |
+
+> Nenhuma ação manual necessária — o auto-seed roda junto com as migrations no startup.
+
+### Populando dados adicionais (admin)
 
 ```bash
 # Cria o usuário admin (email: admin@admin.com / senha: Admin@12345)
@@ -296,18 +311,24 @@ npm run seed:transactions
 
 ### Deploy no Render
 
-Configure as seguintes envs no painel do Render:
+O deploy é feito via **Infrastructure as Code** — o arquivo [`render.yaml`](./render.yaml) define o web service e o banco PostgreSQL automaticamente:
 
-| Variável | Valor |
+```bash
+# 1. Conecte o repositório no Render
+# 2. O render.yaml é detectado automaticamente
+# 3. As variáveis de banco são injetadas via fromDatabase
+# 4. O auto-seed cria o usuário demo na primeira execução
+```
+
+| Variável | Origem |
 |---|---|
-| `NODE_ENV` | `production` |
-| `DB_USE_SSL` | `true` |
-| `JWT_ACCESS_EXPIRES_IN` | `15m` (ou o desejado) |
-| `JWT_REFRESH_EXPIRES_IN` | `7` |
-| `ENABLE_SWAGGER` | `true` (para ativar `/api-docs` em produção) |
-| `SWAGGER_SERVER_URL` | `https://seu-app.onrender.com` |
+| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME` | Injetadas pelo Render PostgreSQL (`fromDatabase`) |
+| `DB_USE_SSL` | `true` (configurado no `render.yaml`) |
+| `DB_SSL_REJECT_UNAUTHORIZED` | `true` (exigido pelo Render) |
+| `JWT_SECRET` | Gerado automaticamente (`generateValue: true`) |
+| `CORS_ORIGINS` | `https://app-financial.vercel.app` (configurado no `render.yaml`) |
 
-O build command é `npm run build` e o start command `npm start`. As credenciais do banco PostgreSQL do Render são injetadas automaticamente via `fromDatabase` no `render.yaml`. Consulte o arquivo [`render.yaml`](./render.yaml) para a configuração completa.
+> ⚠️ O `NODE_ENV=production` e demais variáveis já estão configuradas no `render.yaml` — não é necessário configurar manualmente no painel.
 
 ---
 

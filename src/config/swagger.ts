@@ -697,13 +697,12 @@ export function getSwaggerDocument(renderUrl?: string): OpenAPIV3.Document {
               'application/json': {
                 schema: {
                   type: 'object',
-                  required: ['name', 'amount', 'startDate', 'endDate'],
+                  required: ['categoryId', 'month', 'year', 'limit'],
                   properties: {
-                    name: { type: 'string', example: 'Orçamento Mensal' },
-                    amount: { type: 'number', example: 5000.00 },
-                    startDate: { type: 'string', format: 'date', example: '2026-01-01' },
-                    endDate: { type: 'string', format: 'date', example: '2026-12-31' },
-                    categoryId: { type: 'string', example: '751a845c-53a0-40a7-8e65-2b4ff5b36d8d' },
+                    categoryId: { type: 'string', format: 'uuid', example: '751a845c-53a0-40a7-8e65-2b4ff5b36d8d' },
+                    month: { type: 'integer', minimum: 1, maximum: 12, example: 6 },
+                    year: { type: 'integer', minimum: 2000, maximum: 2100, example: 2026 },
+                    limit: { type: 'number', example: 5000.00 },
                   },
                 },
               },
@@ -739,11 +738,10 @@ export function getSwaggerDocument(renderUrl?: string): OpenAPIV3.Document {
                 schema: {
                   type: 'object',
                   properties: {
-                    name: { type: 'string', example: 'Orçamento Revisado' },
-                    amount: { type: 'number', example: 6000.00 },
-                    startDate: { type: 'string', format: 'date' },
-                    endDate: { type: 'string', format: 'date' },
-                    categoryId: { type: 'string' },
+                    categoryId: { type: 'string', format: 'uuid' },
+                    month: { type: 'integer', minimum: 1, maximum: 12, example: 7 },
+                    year: { type: 'integer', minimum: 2000, maximum: 2100, example: 2026 },
+                    limit: { type: 'number', example: 6000.00 },
                   },
                 },
               },
@@ -1152,12 +1150,12 @@ export function getSwaggerDocument(renderUrl?: string): OpenAPIV3.Document {
       },
       '/analytics/comparison': {
         get: {
-          summary: 'Compara períodos financeiros (mês atual vs anterior)',
+          summary: 'Compara o mês informado com o mês anterior',
           tags: ['Métricas e Analytics'],
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: 'startDate', in: 'query', schema: { type: 'string', format: 'date' }, description: 'Início do período base' },
-            { name: 'endDate', in: 'query', schema: { type: 'string', format: 'date' }, description: 'Fim do período base' },
+            { name: 'month', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 12, example: 6 }, description: 'Mês para comparação (1-12)' },
+            { name: 'year', in: 'query', schema: { type: 'integer', minimum: 2000, maximum: 2100, example: 2026 }, description: 'Ano para comparação' },
           ],
           responses: { '200': { description: 'Comparação gerada.' } },
         },

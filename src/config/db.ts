@@ -1,6 +1,7 @@
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
 
+// dotenv é carregado no server.ts — mantido aqui apenas como fallback para scripts isolados
 dotenv.config();
 
 let dbName = process.env.DB_NAME;

@@ -5,6 +5,7 @@ import { migrator } from './config/migration.js';
 import { logger } from './utils/logger.js';
 import './models/index.js';
 import { startRecurringScheduler } from './services/recurring-scheduler.js';
+import { autoSeed } from './config/auto-seed.js';
 
 dotenv.config();
 
@@ -45,6 +46,8 @@ async function startServer(): Promise<void> {
     }
 
     startRecurringScheduler();
+
+    await autoSeed();
 
     server = app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);

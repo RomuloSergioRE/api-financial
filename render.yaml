@@ -46,6 +46,9 @@ services:
         value: "https://api-financial.onrender.com"
       - key: CORS_ORIGINS
         value: "https://app-financial.vercel.app,https://app-financial-git-main.vercel.app"
+      # ⚠️ Ajuste o CORS_ORIGINS acima se o nome do seu projeto Vercel for diferente
+      # O auto-seed cria automaticamente um usuário demo (demo@zenyfin.app / Demo@123456)
+      # na primeira inicialização — nenhuma ação manual necessária.
 
 databases:
   - name: api-financial-db
