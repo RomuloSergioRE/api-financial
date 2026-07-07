@@ -85,7 +85,7 @@ const skipOptions = (req: Request) => req.method === 'OPTIONS';
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
-  limit: 100, 
+  limit: 300, 
   skip: skipOptions,
   standardHeaders: 'draft-7', 
   legacyHeaders: false, 
